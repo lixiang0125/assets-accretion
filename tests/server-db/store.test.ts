@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createAssetStore, type AssetStore } from "./db";
+import { createAssetStore, type AssetStore } from "../../src/server/db/store";
 
 let store: AssetStore | null = null;
 let dbPath: string | null = null;

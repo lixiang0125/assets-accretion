@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { createAssetStore } from "./db";
+import { renderDocument } from "../client/document";
+import { createAssetStore } from "./db/store";
 
 export const app = new Hono();
 const store = createAssetStore(process.env.ASSETS_DB_PATH ?? "data/assets.sqlite");
@@ -23,15 +24,28 @@ async function parseJson<T>(c: Context) {
   }
 }
 
-function serveFile(path: string, contentType: string) {
-  return new Response(Bun.file(path), {
-    headers: { "Content-Type": contentType },
-  });
-}
+app.get("/", () =>
+  new Response(renderDocument(), {
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  })
+);
 
-app.get("/", () => serveFile("public/index.html", "text/html; charset=utf-8"));
-app.get("/styles.css", () => serveFile("public/styles.css", "text/css; charset=utf-8"));
-app.get("/app.js", () => serveFile("public/app.js", "text/javascript; charset=utf-8"));
+app.get("/assets/app.js", async () => {
+  const build = await Bun.build({
+    entrypoints: ["src/client/main.tsx"],
+    minify: process.env.NODE_ENV === "production",
+    sourcemap: "none",
+    target: "browser",
+  });
+
+  if (!build.success) {
+    return new Response("前端构建失败", { status: 500 });
+  }
+
+  return new Response(build.outputs[0], {
+    headers: { "Content-Type": "text/javascript; charset=utf-8" },
+  });
+});
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
@@ -120,12 +134,3 @@ app.onError((error, c) => {
   console.error(error);
   return c.json({ error: "服务器内部错误" }, 500);
 });
-
-if (import.meta.main) {
-  const port = Number(process.env.PORT ?? 3000);
-  Bun.serve({
-    port,
-    fetch: app.fetch,
-  });
-  console.log(`Server running at http://localhost:${port}`);
-}
