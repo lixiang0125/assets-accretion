@@ -14,20 +14,20 @@
 .status-text {
   min-height: 20px;
   margin: 0;
-  color: #66716b;
+  color: var(--color-muted);
   font-size: 14px;
 }
 
 .status-error {
-  color: #b44433;
+  color: var(--color-danger);
 }
 
 .value-positive {
-  color: #0e7c58;
+  color: var(--color-profit-positive);
   font-weight: 800;
 }
 
 .value-negative {
-  color: #b44433;
+  color: var(--color-profit-negative);
   font-weight: 800;
 }

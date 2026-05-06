@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(28, 36, 32, 0.34);
+  background: rgba(32, 34, 52, 0.34);
 }
 
 .ui-dialog-content {
@@ -16,10 +16,10 @@
   gap: 18px;
   overflow-y: auto;
   transform: translate(-50%, -50%);
-  border: 1px solid #dfe5dc;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 24px 64px rgba(24, 45, 36, 0.2);
+  background: var(--color-surface);
+  box-shadow: 0 24px 64px var(--color-shadow-strong);
   padding: 22px;
 }
 
@@ -37,7 +37,7 @@
 
 .ui-dialog-description {
   margin: 6px 0 0;
-  color: #66716b;
+  color: var(--color-muted);
   font-size: 14px;
   line-height: 1.55;
 }
@@ -57,10 +57,10 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid #dfe5dc;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #ffffff;
-  color: #1c2420;
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: pointer;
 }
 

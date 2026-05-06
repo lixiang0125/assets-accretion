@@ -3,7 +3,7 @@
 }
 
 .pending-record-text {
-  color: #66716b;
+  color: var(--color-muted);
   font-weight: 700;
 }
 

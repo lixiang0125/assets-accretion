@@ -4,13 +4,13 @@
 }
 
 .metric-label {
-  color: #66716b;
+  color: var(--color-muted);
   font-size: 13px;
   font-weight: 700;
 }
 
 .metric-description {
-  color: #66716b;
+  color: var(--color-muted);
   font-size: 12px;
   font-weight: 650;
 }

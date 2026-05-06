@@ -15,35 +15,35 @@
 
 .ui-button-default {
   border: 0;
-  background: #24745a;
-  color: #ffffff;
+  background: var(--color-brand);
+  color: var(--color-brand-foreground);
 }
 
 .ui-button-default:hover:not(:disabled) {
-  background: #1f624d;
+  background: var(--color-brand-hover);
 }
 
 .ui-button-outline {
-  border: 1px solid #dfe5dc;
-  background: #ffffff;
-  color: #1c2420;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .ui-button-outline:hover:not(:disabled),
 .ui-button-ghost:hover:not(:disabled) {
-  background: #e8f3ee;
+  background: var(--color-brand-soft);
 }
 
 .ui-button-ghost {
   border: 0;
   background: transparent;
-  color: #24745a;
+  color: var(--color-brand-strong);
 }
 
 .ui-button-destructive {
-  border: 1px solid #f8e9e6;
-  background: #f8e9e6;
-  color: #b44433;
+  border: 1px solid var(--color-danger-soft);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .ui-button-size-default {

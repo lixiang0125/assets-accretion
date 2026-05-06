@@ -5,6 +5,7 @@ import {
   nextMonth,
   previousMonth,
   shiftMonth,
+  toneClass,
 } from "../../src/client/lib/format";
 
 test("formats small currency values without compacting", () => {
@@ -40,4 +41,11 @@ test("calculates next month across year boundaries", () => {
 test("keeps invalid month values unchanged when shifting", () => {
   expect(shiftMonth("invalid", 1)).toBe("invalid");
   expect(shiftMonth("2026-aa", -1)).toBe("2026-aa");
+});
+
+test("maps profit tone classes for positive and negative values", () => {
+  expect(toneClass(1)).toBe("value-positive");
+  expect(toneClass(-1)).toBe("value-negative");
+  expect(toneClass(0)).toBe("");
+  expect(toneClass(null)).toBe("");
 });

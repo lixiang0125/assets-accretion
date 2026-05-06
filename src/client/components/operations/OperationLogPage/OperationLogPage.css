@@ -1,6 +1,6 @@
 .section-subtitle {
   margin: 6px 0 0;
-  color: #66716b;
+  color: var(--color-muted);
   font-size: 14px;
 }
 
@@ -33,7 +33,7 @@
 }
 
 .operation-payload {
-  color: #66716b;
+  color: var(--color-muted);
   font-size: 13px;
 }
 
@@ -46,10 +46,10 @@
   max-height: 220px;
   overflow: auto;
   margin: 8px 0 0;
-  border: 1px solid #dfe5dc;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #f6f7f3;
-  color: #1c2420;
+  background: var(--color-page);
+  color: var(--color-text);
   font-size: 12px;
   line-height: 1.5;
   padding: 10px;

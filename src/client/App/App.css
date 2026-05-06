@@ -18,7 +18,7 @@
 
 .eyebrow {
   margin: 0 0 8px;
-  color: #24745a;
+  color: var(--color-brand-strong);
   font-size: 13px;
   font-weight: 700;
 }
@@ -71,10 +71,10 @@ h1 {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  border: 1px solid #dfe5dc;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 14px 30px rgba(24, 45, 36, 0.06);
+  box-shadow: 0 14px 30px var(--color-shadow-soft);
   padding: 10px;
 }
 
@@ -92,7 +92,7 @@ h1 {
 }
 
 .view-tab-active {
-  box-shadow: 0 10px 24px rgba(36, 116, 90, 0.16);
+  box-shadow: 0 10px 24px var(--color-brand-shadow);
 }
 
 .record-workspace {

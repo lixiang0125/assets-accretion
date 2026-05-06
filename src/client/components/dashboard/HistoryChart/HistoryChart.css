@@ -5,33 +5,33 @@
 }
 
 .chart-axis {
-  stroke: #dfe5dc;
+  stroke: var(--color-border);
 }
 
 .chart-line {
   fill: none;
-  stroke: #24745a;
+  stroke: var(--color-brand-strong);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 4px;
 }
 
 .chart-point {
-  fill: #24745a;
+  fill: var(--color-brand-strong);
 }
 
 .chart-value-label {
-  fill: #1c2420;
+  fill: var(--color-text);
   font-size: 11px;
 }
 
 .chart-month-label {
-  fill: #66716b;
+  fill: var(--color-muted);
   font-size: 12px;
 }
 
 .empty-chart {
-  color: #66716b;
+  color: var(--color-muted);
   padding: 28px 0;
   text-align: center;
 }
