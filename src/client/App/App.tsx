@@ -27,7 +27,28 @@ export function App() {
             <p className="eyebrow">本地 SQLite 资产台账</p>
             <h1>资产增值统计</h1>
           </div>
-          <div className="month-filter-group">
+        </section>
+
+        <section className="dashboard-controls-row" aria-label="页面导航与对比筛选">
+          <nav className="view-tabs" aria-label="页面导航">
+            <Button
+              type="button"
+              variant={activeView === "dashboard" ? "default" : "outline"}
+              className={cn(activeView === "dashboard" && "view-tab-active")}
+              onClick={() => setActiveView("dashboard")}
+            >
+              资产统计
+            </Button>
+            <Button
+              type="button"
+              variant={activeView === "operation-logs" ? "default" : "outline"}
+              className={cn(activeView === "operation-logs" && "view-tab-active")}
+              onClick={() => setActiveView("operation-logs")}
+            >
+              操作记录
+            </Button>
+          </nav>
+          <div className="period-panel" aria-label="月份筛选">
             <div className="field-stack summary-month-filter">
               <Label htmlFor="summary-month">统计月份</Label>
               <div className="month-stepper" aria-label="统计月份快捷切换">
@@ -59,36 +80,15 @@ export function App() {
                 </Button>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="dashboard-controls-row" aria-label="页面导航与对比筛选">
-          <nav className="view-tabs" aria-label="页面导航">
-            <Button
-              type="button"
-              variant={activeView === "dashboard" ? "default" : "outline"}
-              className={cn(activeView === "dashboard" && "view-tab-active")}
-              onClick={() => setActiveView("dashboard")}
-            >
-              资产统计
-            </Button>
-            <Button
-              type="button"
-              variant={activeView === "operation-logs" ? "default" : "outline"}
-              className={cn(activeView === "operation-logs" && "view-tab-active")}
-              onClick={() => setActiveView("operation-logs")}
-            >
-              操作记录
-            </Button>
-          </nav>
-          <div className="field-stack compare-month-filter">
-            <Label htmlFor="compare-month">对比月份</Label>
-            <Input
-              id="compare-month"
-              type="month"
-              value={dashboard.compareMonth}
-              onChange={(event) => dashboard.changeCompareMonth(event.target.value)}
-            />
+            <div className="field-stack compare-month-filter">
+              <Label htmlFor="compare-month">对比月份</Label>
+              <Input
+                id="compare-month"
+                type="month"
+                value={dashboard.compareMonth}
+                onChange={(event) => dashboard.changeCompareMonth(event.target.value)}
+              />
+            </div>
           </div>
         </section>
 
