@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AssetDetailTable } from "./components/dashboard/AssetDetailTable";
 import { DeleteRecordDialog } from "./components/dashboard/DeleteRecordDialog";
 import { AssetTypeForm } from "./components/dashboard/AssetTypeForm";
@@ -29,12 +30,34 @@ export function App() {
           <div className="month-filter-group">
             <div className="field-stack month-filter">
               <Label htmlFor="summary-month">统计月份</Label>
-              <Input
-                id="summary-month"
-                type="month"
-                value={dashboard.month}
-                onChange={(event) => dashboard.changeMonth(event.target.value)}
-              />
+              <div className="month-stepper" aria-label="统计月份快捷切换">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="切换到上一个月"
+                  title="切换到上一个月"
+                  onClick={dashboard.goToPreviousMonth}
+                >
+                  <ChevronLeft aria-hidden="true" />
+                </Button>
+                <Input
+                  id="summary-month"
+                  type="month"
+                  value={dashboard.month}
+                  onChange={(event) => dashboard.changeMonth(event.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="切换到下一个月"
+                  title="切换到下一个月"
+                  onClick={dashboard.goToNextMonth}
+                >
+                  <ChevronRight aria-hidden="true" />
+                </Button>
+              </div>
             </div>
             <div className="field-stack month-filter">
               <Label htmlFor="compare-month">对比月份</Label>

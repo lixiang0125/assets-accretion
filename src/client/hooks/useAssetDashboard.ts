@@ -14,7 +14,7 @@ import type {
   StatusType,
   SummaryItem,
 } from "../types";
-import { currentMonth, previousMonth } from "../lib/format";
+import { currentMonth, nextMonth, previousMonth } from "../lib/format";
 
 const initialMonth = currentMonth();
 const initialCompareMonth = previousMonth(initialMonth);
@@ -144,20 +144,28 @@ export function useAssetDashboard() {
     }
   }
 
-  async function changeMonth(nextMonth: string) {
-    const nextCompareMonth = previousMonth(nextMonth);
-    setMonth(nextMonth);
+  async function changeMonth(targetMonth: string) {
+    const nextCompareMonth = previousMonth(targetMonth);
+    setMonth(targetMonth);
     setCompareMonth(nextCompareMonth);
     setRecordForm((current) =>
-      editingRecord ? current : { ...current, month: nextMonth }
+      editingRecord ? current : { ...current, month: targetMonth }
     );
     try {
-      await loadSummary(nextMonth, nextCompareMonth);
+      await loadSummary(targetMonth, nextCompareMonth);
       setStatus("统计月份已切换");
       setStatusType("idle");
     } catch (error) {
       showError(error);
     }
+  }
+
+  async function goToPreviousMonth() {
+    await changeMonth(previousMonth(month));
+  }
+
+  async function goToNextMonth() {
+    await changeMonth(nextMonth(month));
   }
 
   async function changeCompareMonth(nextCompareMonth: string) {
@@ -283,6 +291,8 @@ export function useAssetDashboard() {
     cancelDeleteRecord,
     confirmDeleteRecord,
     editRecord,
+    goToNextMonth,
+    goToPreviousMonth,
     openHistory,
     refreshDashboard: refresh,
     recordAssetType,

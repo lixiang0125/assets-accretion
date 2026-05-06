@@ -62,6 +62,22 @@ h1 {
   width: 190px;
 }
 
+.month-filter:first-child {
+  width: 280px;
+}
+
+.month-stepper {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-stepper .ui-button svg {
+  width: 18px;
+  height: 18px;
+}
+
 .metrics-grid,
 .forms-grid {
   display: grid;

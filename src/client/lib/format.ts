@@ -36,12 +36,20 @@ export function currentMonth(now = new Date()) {
 }
 
 export function previousMonth(month: string) {
+  return shiftMonth(month, -1);
+}
+
+export function nextMonth(month: string) {
+  return shiftMonth(month, 1);
+}
+
+export function shiftMonth(month: string, offset: number) {
   const [yearText, monthText] = month.split("-");
   const year = Number(yearText);
   const monthIndex = Number(monthText) - 1;
   if (!Number.isInteger(year) || !Number.isInteger(monthIndex)) return month;
 
-  const date = new Date(Date.UTC(year, monthIndex - 1, 1));
+  const date = new Date(Date.UTC(year, monthIndex + offset, 1));
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
