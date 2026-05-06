@@ -47,6 +47,7 @@ SQLite 默认文件位于 `data/assets.sqlite`，已加入 `.gitignore`。
 - `docs/README.md`：规则库和知识库索引。
 - `docs/rules/development-guide.md`：开发、架构边界、验证与提交要求。
 - `docs/knowledge-base/project-overview.md`：技术栈、目录结构、数据模型和 API 说明。
+- `docs/experience.md`：开发经验、踩坑背景、用户偏好和后续维护提醒。
 
 ## API
 

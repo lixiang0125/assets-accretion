@@ -9,6 +9,7 @@
 1. `docs/README.md`：文档索引与推荐阅读顺序。
 2. `docs/rules/development-guide.md`：开发规则、架构边界、验证与提交要求。
 3. `docs/knowledge-base/project-overview.md`：项目概览、技术栈、目录结构、数据与 API 约定。
+4. `docs/experience.md`：开发经验、踩坑背景、用户偏好与后续维护提醒。
 
 ## 强制要求
 
@@ -18,6 +19,7 @@
 - SQLite 数据只保存在本地 `data/assets.sqlite`，数据库文件不得提交到 git。
 - 安装依赖必须使用 npm 官方源 `https://registry.npmjs.org/`，不得使用内部 registry。
 - 修改项目结构、运行脚本、数据契约或关键约定时，必须同步更新 `docs/` 和 `README.md`。
+- 开发中发现可复用经验、重复踩坑、用户新增偏好或验证方式时，必须主动追加到 `docs/experience.md`；新增分类时同步更新 `docs/README.md` 的索引。
 - 提交前必须至少运行 `bun test` 和 `bun run typecheck`；涉及客户端入口时补跑 `bun build src/client/main.tsx --target browser --outfile /tmp/assets-accretion-client-check.js`。
 
 ## 禁止行为
