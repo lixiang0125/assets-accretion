@@ -26,14 +26,25 @@ export function App() {
             <p className="eyebrow">本地 SQLite 资产台账</p>
             <h1>资产增值统计</h1>
           </div>
-          <div className="field-stack month-filter">
-            <Label htmlFor="summary-month">统计月份</Label>
-            <Input
-              id="summary-month"
-              type="month"
-              value={dashboard.month}
-              onChange={(event) => dashboard.changeMonth(event.target.value)}
-            />
+          <div className="month-filter-group">
+            <div className="field-stack month-filter">
+              <Label htmlFor="summary-month">统计月份</Label>
+              <Input
+                id="summary-month"
+                type="month"
+                value={dashboard.month}
+                onChange={(event) => dashboard.changeMonth(event.target.value)}
+              />
+            </div>
+            <div className="field-stack month-filter">
+              <Label htmlFor="compare-month">对比月份</Label>
+              <Input
+                id="compare-month"
+                type="month"
+                value={dashboard.compareMonth}
+                onChange={(event) => dashboard.changeCompareMonth(event.target.value)}
+              />
+            </div>
           </div>
         </section>
 
@@ -58,7 +69,7 @@ export function App() {
 
         {activeView === "dashboard" ? (
           <>
-            <MetricsGrid summary={dashboard.summary} />
+            <MetricsGrid compareMonth={dashboard.compareMonth} summary={dashboard.summary} />
 
             <section className="forms-grid">
               <AssetTypeForm
@@ -85,6 +96,7 @@ export function App() {
               statusType={dashboard.statusType}
               onEditRecord={dashboard.editRecord}
               onOpenHistory={dashboard.openHistory}
+              onRecordAssetType={dashboard.recordAssetType}
               onRequestDeleteRecord={dashboard.requestDeleteRecord}
             />
           </>

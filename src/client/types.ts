@@ -6,22 +6,24 @@ export type AssetType = {
 };
 
 export type SummaryItem = {
-  id: number;
+  id: number | null;
   assetTypeId: number;
   assetTypeName: string;
   month: string;
-  value: number;
+  value: number | null;
   note: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | null;
+  updatedAt: string | null;
   previousMonth: string | null;
   previousValue: number | null;
   changeValue: number | null;
   changeRate: number | null;
+  hasRecord: boolean;
 };
 
 export type PortfolioSummary = {
   month: string | null;
+  compareMonth: string | null;
   totalValue: number;
   totalPreviousValue: number;
   totalChangeValue: number;

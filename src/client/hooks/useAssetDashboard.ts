@@ -14,9 +14,10 @@ import type {
   StatusType,
   SummaryItem,
 } from "../types";
-import { currentMonth } from "../lib/format";
+import { currentMonth, previousMonth } from "../lib/format";
 
 const initialMonth = currentMonth();
+const initialCompareMonth = previousMonth(initialMonth);
 
 const emptyRecordForm: RecordFormState = {
   assetTypeId: "",
@@ -27,6 +28,7 @@ const emptyRecordForm: RecordFormState = {
 
 export function useAssetDashboard() {
   const [month, setMonth] = useState(initialMonth);
+  const [compareMonth, setCompareMonth] = useState(initialCompareMonth);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [assetTypeName, setAssetTypeName] = useState("");
@@ -66,8 +68,8 @@ export function useAssetDashboard() {
     return data.items;
   }
 
-  async function loadSummary(nextMonth = month) {
-    const data = await fetchSummary(nextMonth);
+  async function loadSummary(nextMonth = month, nextCompareMonth = compareMonth) {
+    const data = await fetchSummary(nextMonth, nextCompareMonth);
     setSummary(data);
     return data;
   }
@@ -86,7 +88,10 @@ export function useAssetDashboard() {
   }
 
   async function refresh(message = "数据已刷新") {
-    const [nextAssetTypes] = await Promise.all([loadAssetTypes(), loadSummary()]);
+    const [nextAssetTypes] = await Promise.all([
+      loadAssetTypes(),
+      loadSummary(month, compareMonth),
+    ]);
     if (drawerAsset) {
       const nextDrawerAsset =
         nextAssetTypes.find((assetType) => assetType.id === drawerAsset.id) ?? drawerAsset;
@@ -130,7 +135,7 @@ export function useAssetDashboard() {
     try {
       await saveRecord(
         { ...recordForm, assetTypeId: selectedAssetTypeId },
-        editingRecord?.id
+        editingRecord?.id ?? undefined
       );
       resetRecordForm();
       await refresh(editingRecord ? "月度价值已更新" : "月度价值已保存");
@@ -140,12 +145,14 @@ export function useAssetDashboard() {
   }
 
   async function changeMonth(nextMonth: string) {
+    const nextCompareMonth = previousMonth(nextMonth);
     setMonth(nextMonth);
+    setCompareMonth(nextCompareMonth);
     setRecordForm((current) =>
       editingRecord ? current : { ...current, month: nextMonth }
     );
     try {
-      await loadSummary(nextMonth);
+      await loadSummary(nextMonth, nextCompareMonth);
       setStatus("统计月份已切换");
       setStatusType("idle");
     } catch (error) {
@@ -153,7 +160,22 @@ export function useAssetDashboard() {
     }
   }
 
+  async function changeCompareMonth(nextCompareMonth: string) {
+    setCompareMonth(nextCompareMonth);
+    try {
+      await loadSummary(month, nextCompareMonth);
+      setStatus("对比月份已切换");
+      setStatusType("idle");
+    } catch (error) {
+      showError(error);
+    }
+  }
+
   function editRecord(item: SummaryItem) {
+    if (!item.hasRecord || item.id === null || item.value === null) {
+      recordAssetType(item);
+      return;
+    }
     setEditingRecord(item);
     setRecordForm({
       assetTypeId: item.assetTypeId.toString(),
@@ -165,7 +187,22 @@ export function useAssetDashboard() {
     setStatusType("idle");
   }
 
+  function recordAssetType(item: SummaryItem) {
+    setEditingRecord(null);
+    setRecordForm({
+      assetTypeId: item.assetTypeId.toString(),
+      month: item.month,
+      value: "",
+      note: "",
+    });
+    setStatus(`正在记录「${item.assetTypeName}」${item.month} 的月度价值`);
+    setStatusType("idle");
+  }
+
   function requestDeleteRecord(item: SummaryItem) {
+    if (!item.hasRecord || item.id === null) {
+      return;
+    }
     setPendingDeleteRecord(item);
     setDeleteConfirmStep(1);
     setStatus("等待删除确认");
@@ -187,6 +224,7 @@ export function useAssetDashboard() {
 
     setIsDeletingRecord(true);
     try {
+      if (pendingDeleteRecord.id === null) return;
       await deleteRecord(pendingDeleteRecord.id);
       if (editingRecord?.id === pendingDeleteRecord.id) {
         resetRecordForm();
@@ -207,7 +245,7 @@ export function useAssetDashboard() {
         id: item.assetTypeId,
         name: item.assetTypeName,
         description: null,
-        createdAt: item.createdAt,
+        createdAt: item.createdAt ?? "",
       }
     );
   }
@@ -226,6 +264,7 @@ export function useAssetDashboard() {
     assetTypeDescription,
     assetTypeName,
     assetTypes,
+    compareMonth,
     drawerAsset,
     drawerHistory,
     editingRecord,
@@ -240,11 +279,13 @@ export function useAssetDashboard() {
     statusType,
     summary,
     changeMonth,
+    changeCompareMonth,
     cancelDeleteRecord,
     confirmDeleteRecord,
     editRecord,
     openHistory,
     refreshDashboard: refresh,
+    recordAssetType,
     requestDeleteRecord,
     resetRecordForm,
     setAssetTypeDescription,

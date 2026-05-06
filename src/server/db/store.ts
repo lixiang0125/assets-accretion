@@ -2,6 +2,8 @@ import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
+const EAST_EIGHT_SQL_TIMESTAMP = "datetime('now', '+8 hours')";
+
 export type AssetType = {
   id: number;
   name: string;
@@ -20,11 +22,20 @@ export type AssetRecord = {
   updatedAt: string;
 };
 
-export type AssetSummary = AssetRecord & {
+export type AssetSummary = {
+  id: number | null;
+  assetTypeId: number;
+  assetTypeName: string;
+  month: string;
+  value: number | null;
+  note: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
   previousMonth: string | null;
   previousValue: number | null;
   changeValue: number | null;
   changeRate: number | null;
+  hasRecord: boolean;
 };
 
 export type OperationLogAction =
@@ -81,7 +92,15 @@ type AssetRecordRow = {
   updated_at: string;
 };
 
-type AssetSummaryRow = AssetRecordRow & {
+type AssetSummaryRow = {
+  id: number | null;
+  asset_type_id: number;
+  asset_type_name: string;
+  month: string;
+  value: number | null;
+  note: string | null;
+  created_at: string | null;
+  updated_at: string | null;
   previous_month: string | null;
   previous_value: number | null;
 };
@@ -111,7 +130,7 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       description TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (${EAST_EIGHT_SQL_TIMESTAMP})
     );
 
     CREATE TABLE IF NOT EXISTS asset_records (
@@ -120,8 +139,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       month TEXT NOT NULL,
       value REAL NOT NULL CHECK (value >= 0),
       note TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (${EAST_EIGHT_SQL_TIMESTAMP}),
+      updated_at TEXT NOT NULL DEFAULT (${EAST_EIGHT_SQL_TIMESTAMP}),
       UNIQUE (asset_type_id, month),
       FOREIGN KEY (asset_type_id) REFERENCES asset_types(id) ON DELETE CASCADE
     );
@@ -138,7 +157,7 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       reversible INTEGER NOT NULL DEFAULT 0,
       restored_at TEXT,
       source_log_id INTEGER,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (${EAST_EIGHT_SQL_TIMESTAMP})
     );
   `);
 
@@ -161,20 +180,29 @@ export function createAssetStore(filename = "data/assets.sqlite") {
   });
 
   const mapSummary = (row: AssetSummaryRow): AssetSummary => {
-    const record = mapRecord(row);
     const changeValue =
-      row.previous_value === null ? null : record.value - row.previous_value;
+      row.value === null || row.previous_value === null
+        ? null
+        : row.value - row.previous_value;
     const changeRate =
-      row.previous_value === null || row.previous_value === 0
+      changeValue === null || row.previous_value === null || row.previous_value === 0
         ? null
         : changeValue! / row.previous_value;
 
     return {
-      ...record,
+      id: row.id,
+      assetTypeId: row.asset_type_id,
+      assetTypeName: row.asset_type_name,
+      month: row.month,
+      value: row.value,
+      note: row.note,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
       previousMonth: row.previous_month,
       previousValue: row.previous_value,
       changeValue,
       changeRate,
+      hasRecord: row.id !== null,
     };
   };
 
@@ -243,7 +271,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
           before_payload,
           after_payload,
           reversible,
-          source_log_id
+          source_log_id,
+          created_at
         )
         VALUES (
           $action,
@@ -254,7 +283,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
           $beforePayload,
           $afterPayload,
           $reversible,
-          $sourceLogId
+          $sourceLogId,
+          ${EAST_EIGHT_SQL_TIMESTAMP}
         )
       `
       )
@@ -309,7 +339,10 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       const name = input.name.trim();
       const description = input.description?.trim() || null;
       db.query(
-        "INSERT INTO asset_types (name, description) VALUES ($name, $description)"
+        `
+        INSERT INTO asset_types (name, description, created_at)
+        VALUES ($name, $description, ${EAST_EIGHT_SQL_TIMESTAMP})
+      `
       ).run({ $name: name, $description: description });
 
       const row = db
@@ -386,12 +419,26 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       const note = input.note?.trim() || null;
       db.query(
         `
-        INSERT INTO asset_records (asset_type_id, month, value, note)
-        VALUES ($assetTypeId, $month, $value, $note)
+        INSERT INTO asset_records (
+          asset_type_id,
+          month,
+          value,
+          note,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          $assetTypeId,
+          $month,
+          $value,
+          $note,
+          ${EAST_EIGHT_SQL_TIMESTAMP},
+          ${EAST_EIGHT_SQL_TIMESTAMP}
+        )
         ON CONFLICT(asset_type_id, month) DO UPDATE SET
           value = excluded.value,
           note = excluded.note,
-          updated_at = datetime('now')
+          updated_at = ${EAST_EIGHT_SQL_TIMESTAMP}
       `
       ).run({
         $assetTypeId: input.assetTypeId,
@@ -433,7 +480,7 @@ export function createAssetStore(filename = "data/assets.sqlite") {
             month = $month,
             value = $value,
             note = $note,
-            updated_at = datetime('now')
+            updated_at = ${EAST_EIGHT_SQL_TIMESTAMP}
         WHERE id = $recordId
       `
       ).run({
@@ -631,7 +678,7 @@ export function createAssetStore(filename = "data/assets.sqlite") {
             $value,
             $note,
             $createdAt,
-            datetime('now')
+            ${EAST_EIGHT_SQL_TIMESTAMP}
           )
         `
         ).run({
@@ -643,9 +690,9 @@ export function createAssetStore(filename = "data/assets.sqlite") {
           $createdAt: payload.createdAt,
         });
 
-        db.query("UPDATE operation_logs SET restored_at = datetime('now') WHERE id = ?").run(
-          log.id
-        );
+        db.query(
+          `UPDATE operation_logs SET restored_at = ${EAST_EIGHT_SQL_TIMESTAMP} WHERE id = ?`
+        ).run(log.id);
 
         const restoredRow = db
           .query<AssetRecordRow, [number]>(
@@ -747,7 +794,53 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       return rows.map(mapSummary);
     },
 
-    listSummary(month?: string) {
+    listSummary(month?: string, compareMonth?: string) {
+      if (month) {
+        const comparisonJoin = compareMonth
+          ? `
+            LEFT JOIN asset_records prev ON prev.asset_type_id = t.id
+              AND prev.month = $compareMonth
+          `
+          : `
+            LEFT JOIN asset_records prev ON prev.id = (
+              SELECT p.id
+              FROM asset_records p
+              WHERE p.asset_type_id = t.id
+                AND p.month < $month
+              ORDER BY p.month DESC
+              LIMIT 1
+            )
+          `;
+        const sql = `
+            SELECT
+              r.id,
+              t.id AS asset_type_id,
+              t.name AS asset_type_name,
+              COALESCE(r.month, $month) AS month,
+              r.value,
+              r.note,
+              r.created_at,
+              r.updated_at,
+              prev.month AS previous_month,
+              prev.value AS previous_value
+            FROM asset_types t
+            LEFT JOIN asset_records r ON r.asset_type_id = t.id
+              AND r.month = $month
+            ${comparisonJoin}
+            ORDER BY t.name
+          `;
+
+        const rows = compareMonth
+          ? db
+              .query<AssetSummaryRow, [{ $month: string; $compareMonth: string }]>(
+                sql
+              )
+              .all({ $month: month, $compareMonth: compareMonth })
+          : db.query<AssetSummaryRow, [{ $month: string }]>(sql).all({ $month: month });
+
+        return rows.map(mapSummary);
+      }
+
       const sql = `
         SELECT
           r.id,
@@ -770,31 +863,30 @@ export function createAssetStore(filename = "data/assets.sqlite") {
           ORDER BY p.month DESC
           LIMIT 1
         )
-        ${month ? "WHERE r.month = $month" : ""}
         ORDER BY r.month DESC, t.name
       `;
 
-      const rows = month
-        ? db.query<AssetSummaryRow, [{ $month: string }]>(sql).all({ $month: month })
-        : db.query<AssetSummaryRow, []>(sql).all();
+      const rows = db.query<AssetSummaryRow, []>(sql).all();
 
       return rows.map(mapSummary);
     },
 
-    getPortfolioSummary(month?: string) {
-      const rows = this.listSummary(month);
-      const totalValue = rows.reduce((sum, row) => sum + row.value, 0);
+    getPortfolioSummary(month?: string, compareMonth?: string) {
+      const rows = this.listSummary(month, compareMonth);
+      const recordedRows = rows.filter((row) => row.value !== null);
+      const totalValue = recordedRows.reduce((sum, row) => sum + row.value!, 0);
       const totalPreviousValue = rows.reduce(
-        (sum, row) => sum + (row.previousValue ?? 0),
+        (sum, row) => sum + (row.value === null ? 0 : row.previousValue ?? 0),
         0
       );
       const totalChangeValue = rows.reduce(
-        (sum, row) => sum + (row.changeValue ?? 0),
+        (sum, row) => sum + (row.value === null ? 0 : row.changeValue ?? 0),
         0
       );
 
       return {
         month: month ?? null,
+        compareMonth: compareMonth ?? null,
         totalValue,
         totalPreviousValue,
         totalChangeValue,

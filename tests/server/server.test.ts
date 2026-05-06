@@ -200,11 +200,42 @@ test("rejects record updates that collide with another month", async () => {
 test("rejects invalid month query parameters", async () => {
   const recordsResponse = await app.request("/api/records?month=not-a-month");
   const summaryResponse = await app.request("/api/summary?month=2026-00");
+  const compareSummaryResponse = await app.request(
+    "/api/summary?month=2026-05&compareMonth=2026-13"
+  );
 
   expect(recordsResponse.status).toBe(400);
   expect(await recordsResponse.json()).toEqual({ error: "月份格式必须是 YYYY-MM" });
   expect(summaryResponse.status).toBe(400);
   expect(await summaryResponse.json()).toEqual({ error: "月份格式必须是 YYYY-MM" });
+  expect(compareSummaryResponse.status).toBe(400);
+  expect(await compareSummaryResponse.json()).toEqual({
+    error: "对比月份格式必须是 YYYY-MM",
+  });
+});
+
+test("summarizes changes against a selected comparison month", async () => {
+  const asset = await createAssetType("现金");
+  await createRecord({ assetTypeId: asset.id, month: "2026-01", value: 40 });
+  await createRecord({ assetTypeId: asset.id, month: "2026-04", value: 100 });
+  await createRecord({ assetTypeId: asset.id, month: "2026-05", value: 150 });
+
+  const response = await app.request(
+    "/api/summary?month=2026-05&compareMonth=2026-01"
+  );
+  const payload = await response.json();
+
+  expect(response.status).toBe(200);
+  expect(payload.compareMonth).toBe("2026-01");
+  expect(payload.totalPreviousValue).toBe(40);
+  expect(payload.totalChangeValue).toBe(110);
+  expect(payload.totalChangeRate).toBe(2.75);
+  expect(payload.items[0]).toMatchObject({
+    previousMonth: "2026-01",
+    previousValue: 40,
+    changeValue: 110,
+    changeRate: 2.75,
+  });
 });
 
 test("updates, deletes, and lists asset history through API", async () => {
@@ -245,7 +276,15 @@ test("updates, deletes, and lists asset history through API", async () => {
   ]);
   expect(historyPayload.items[1].changeValue).toBe(2500);
   expect(deleteResponse.status).toBe(200);
-  expect(summaryAfterDelete.items).toEqual([]);
+  expect(summaryAfterDelete.items).toHaveLength(1);
+  expect(summaryAfterDelete.items[0]).toMatchObject({
+    assetTypeId,
+    month: "2026-05",
+    value: null,
+    hasRecord: false,
+    previousMonth: "2026-04",
+    previousValue: 10000,
+  });
   expect(summaryAfterDelete.totalValue).toBe(0);
 
   const deletedAgainResponse = await app.request(`/api/records/${recordId}`, {
@@ -307,6 +346,7 @@ test("lists operation logs and restores a deleted monthly record", async () => {
   const summaryPayload = await summaryResponse.json();
   expect(summaryPayload.items).toHaveLength(1);
   expect(summaryPayload.items[0].id).toBe(mayRecord.id);
+  expect(summaryPayload.items[0].hasRecord).toBe(true);
 
   const refreshedLogsResponse = await app.request(
     "/api/operation-logs?action=record_deleted"

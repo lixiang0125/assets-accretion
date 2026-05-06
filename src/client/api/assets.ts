@@ -33,8 +33,10 @@ export async function createAssetType(input: {
   });
 }
 
-export async function fetchSummary(month: string) {
-  return request<PortfolioSummary>(`/api/summary?month=${encodeURIComponent(month)}`);
+export async function fetchSummary(month: string, compareMonth?: string) {
+  const params = new URLSearchParams({ month });
+  if (compareMonth) params.set("compareMonth", compareMonth);
+  return request<PortfolioSummary>(`/api/summary?${params.toString()}`);
 }
 
 export async function fetchAssetHistory(assetTypeId: number) {

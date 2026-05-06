@@ -52,8 +52,14 @@ h1 {
   line-height: 1;
 }
 
+.month-filter-group {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
 .month-filter {
-  width: 220px;
+  width: 190px;
 }
 
 .metrics-grid,
@@ -114,6 +120,12 @@ h1 {
   color: #66716b;
   font-size: 13px;
   font-weight: 700;
+}
+
+.metric-description {
+  color: #66716b;
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .metric-value {
@@ -328,6 +340,11 @@ h1 {
 .empty-cell {
   color: #66716b;
   text-align: center;
+}
+
+.pending-record-text {
+  color: #66716b;
+  font-weight: 700;
 }
 
 .status-text {
@@ -667,8 +684,14 @@ h1 {
   }
 
   .month-filter,
+  .month-filter-group,
   .ui-sheet-content {
     width: 100%;
+  }
+
+  .month-filter-group {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .metrics-grid,

@@ -9,20 +9,23 @@ export function HistoryChart({ items }: HistoryChartProps) {
   const width = 560;
   const height = 240;
   const padding = 34;
+  const recordedItems = items.filter(
+    (item): item is SummaryItem & { value: number } => item.value !== null
+  );
 
-  if (items.length === 0) {
+  if (recordedItems.length === 0) {
     return <div className="empty-chart">暂无月度记录</div>;
   }
 
-  const values = items.map((item) => item.value);
+  const values = recordedItems.map((item) => item.value);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const range = maxValue - minValue || 1;
-  const points = items.map((item, index) => {
+  const points = recordedItems.map((item, index) => {
     const x =
-      items.length === 1
+      recordedItems.length === 1
         ? width / 2
-        : padding + (index * (width - padding * 2)) / (items.length - 1);
+        : padding + (index * (width - padding * 2)) / (recordedItems.length - 1);
     const y = height - padding - ((item.value - minValue) / range) * (height - padding * 2);
     return { item, x, y };
   });

@@ -26,6 +26,16 @@ function createTempStore() {
   return store;
 }
 
+function parseSqliteTimestamp(value: string) {
+  return new Date(`${value.replace(" ", "T")}Z`);
+}
+
+function expectEastEightTimestamp(value: string) {
+  const actual = parseSqliteTimestamp(value).getTime();
+  const expected = Date.now() + 8 * 60 * 60 * 1000;
+  expect(Math.abs(actual - expected)).toBeLessThan(20_000);
+}
+
 test("calculates month-over-month asset appreciation", () => {
   const assetStore = createTempStore();
   const cash = assetStore.createAssetType({ name: "现金" });
@@ -72,6 +82,147 @@ test("upserts one value per asset type and month", () => {
 
   expect(records).toHaveLength(1);
   expect(records[0]?.value).toBe(6500);
+});
+
+test("writes asset and operation timestamps in GMT plus eight", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({ name: "现金" });
+
+  expect(cash?.createdAt).toBeString();
+  expectEastEightTimestamp(cash!.createdAt);
+
+  const record = assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 100,
+  });
+  expect(record).not.toBeNull();
+  expectEastEightTimestamp(record!.createdAt);
+  expectEastEightTimestamp(record!.updatedAt);
+
+  const createLog = assetStore.listOperationLogs({ limit: 1 })[0];
+  expect(createLog?.createdAt).toBeString();
+  expectEastEightTimestamp(createLog!.createdAt);
+
+  expect(assetStore.deleteRecord(record!.id)).toBe(true);
+  const deleteLog = assetStore.listOperationLogs({
+    action: "record_deleted",
+    limit: 1,
+  })[0];
+  const restoreResult = assetStore.restoreOperationLog(deleteLog!.id);
+
+  expect(restoreResult.ok).toBe(true);
+  const restoredDeleteLog = assetStore.getOperationLogById(deleteLog!.id);
+  expect(restoredDeleteLog?.restoredAt).toBeString();
+  expectEastEightTimestamp(restoredDeleteLog!.restoredAt!);
+});
+
+test("updates monthly record timestamps in GMT plus eight", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({ name: "现金" });
+  const record = assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 100,
+  });
+
+  expect(record).not.toBeNull();
+  const updated = assetStore.updateRecord(record!.id, {
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 150,
+  });
+
+  expect(updated?.updatedAt).toBeString();
+  expectEastEightTimestamp(updated!.updatedAt);
+});
+
+
+test("monthly summary includes every asset type even before that month is recorded", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({ name: "现金" });
+  const stock = assetStore.createAssetType({ name: "股票" });
+
+  expect(cash?.createdAt).toBeString();
+  expect(stock?.createdAt).toBeString();
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-04",
+    value: 10000,
+  });
+
+  const summary = assetStore.getPortfolioSummary("2026-05");
+
+  expect(summary.items.map((item) => item.assetTypeName)).toEqual(["现金", "股票"]);
+  expect(summary.items[0]).toMatchObject({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: null,
+    hasRecord: false,
+    previousMonth: "2026-04",
+    previousValue: 10000,
+    changeValue: null,
+    changeRate: null,
+  });
+  expect(summary.items[1]).toMatchObject({
+    assetTypeId: stock!.id,
+    month: "2026-05",
+    value: null,
+    hasRecord: false,
+    previousMonth: null,
+    previousValue: null,
+  });
+  expect(summary.totalValue).toBe(0);
+  expect(summary.totalPreviousValue).toBe(0);
+  expect(summary.totalChangeValue).toBe(0);
+  expect(summary.totalChangeRate).toBeNull();
+});
+
+test("monthly summary can compare against any selected month", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({ name: "现金" });
+
+  expect(cash?.createdAt).toBeString();
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-01",
+    value: 40,
+  });
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-04",
+    value: 100,
+  });
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 150,
+  });
+
+  const januaryComparison = assetStore.getPortfolioSummary("2026-05", "2026-01");
+  const missingComparison = assetStore.getPortfolioSummary("2026-05", "2026-02");
+
+  expect(januaryComparison.compareMonth).toBe("2026-01");
+  expect(januaryComparison.totalPreviousValue).toBe(40);
+  expect(januaryComparison.totalChangeValue).toBe(110);
+  expect(januaryComparison.totalChangeRate).toBe(2.75);
+  expect(januaryComparison.items[0]).toMatchObject({
+    previousMonth: "2026-01",
+    previousValue: 40,
+    changeValue: 110,
+    changeRate: 2.75,
+  });
+
+  expect(missingComparison.compareMonth).toBe("2026-02");
+  expect(missingComparison.totalPreviousValue).toBe(0);
+  expect(missingComparison.totalChangeValue).toBe(0);
+  expect(missingComparison.totalChangeRate).toBeNull();
+  expect(missingComparison.items[0]).toMatchObject({
+    previousMonth: null,
+    previousValue: null,
+    changeValue: null,
+    changeRate: null,
+  });
 });
 
 test("updates and deletes monthly records without recreating asset types", () => {

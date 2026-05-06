@@ -61,7 +61,7 @@ export function HistoryDrawer({ asset, history, isLoading, onOpenChange }: Histo
                     </TableRow>
                   ) : (
                     history.map((item) => (
-                      <TableRow key={item.id}>
+                      <TableRow key={`${item.assetTypeId}-${item.month}`}>
                         <TableCell>{item.month}</TableCell>
                         <TableCell>{formatCurrency(item.value)}</TableCell>
                         <TableCell className={toneClass(item.changeValue)}>
