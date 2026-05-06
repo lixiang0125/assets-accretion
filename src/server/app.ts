@@ -1,9 +1,39 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve, sep } from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { renderDocument } from "../client/document";
 import { createApiRoutes } from "./api";
 import { createAssetStore, type AssetStore } from "./db/store";
+
+const clientRoot = resolve("src/client");
+
+function readClientCss(assetPath: string) {
+  if (!assetPath.endsWith(".css") || assetPath.includes("\0")) {
+    return null;
+  }
+
+  const filePath = resolve(clientRoot, assetPath);
+  if (!filePath.startsWith(`${clientRoot}${sep}`) || !existsSync(filePath)) {
+    return null;
+  }
+
+  return readFileSync(filePath);
+}
+
+function cssResponse(assetPath: string) {
+  const css = readClientCss(assetPath);
+  if (!css) {
+    return new Response(null, { status: 404 });
+  }
+
+  return new Response(css, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/css; charset=utf-8",
+    },
+  });
+}
 
 export function createApp(store: AssetStore) {
   const app = new Hono();
@@ -37,14 +67,8 @@ export function createApp(store: AssetStore) {
     });
   });
 
-  app.get("/assets/styles.css", () =>
-    new Response(readFileSync("src/client/styles.css"), {
-      headers: {
-        "Cache-Control": "no-store",
-        "Content-Type": "text/css; charset=utf-8",
-      },
-    })
-  );
+  app.get("/assets/styles.css", () => cssResponse("styles.css"));
+  app.get("/assets/*", (c) => cssResponse(c.req.path.replace(/^\/assets\//, "")));
 
   app.get("/favicon.ico", () => new Response(null, { status: 204 }));
 

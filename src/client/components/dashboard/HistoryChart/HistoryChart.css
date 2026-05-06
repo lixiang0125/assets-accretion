@@ -1,0 +1,37 @@
+.history-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-axis {
+  stroke: #dfe5dc;
+}
+
+.chart-line {
+  fill: none;
+  stroke: #24745a;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4px;
+}
+
+.chart-point {
+  fill: #24745a;
+}
+
+.chart-value-label {
+  fill: #1c2420;
+  font-size: 11px;
+}
+
+.chart-month-label {
+  fill: #66716b;
+  font-size: 12px;
+}
+
+.empty-chart {
+  color: #66716b;
+  padding: 28px 0;
+  text-align: center;
+}

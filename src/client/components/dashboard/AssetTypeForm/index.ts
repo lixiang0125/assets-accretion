@@ -1,0 +1,1 @@
+export { AssetTypeForm } from "./AssetTypeForm";

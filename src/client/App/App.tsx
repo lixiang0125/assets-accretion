@@ -1,0 +1,148 @@
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AssetDetailTable } from "../components/dashboard/AssetDetailTable";
+import { DeleteRecordDialog } from "../components/dashboard/DeleteRecordDialog";
+import { AssetTypeForm } from "../components/dashboard/AssetTypeForm";
+import { HistoryDrawer } from "../components/dashboard/HistoryDrawer";
+import { MetricsGrid } from "../components/dashboard/MetricsGrid";
+import { RecordForm } from "../components/dashboard/RecordForm";
+import { OperationLogPage } from "../components/operations/OperationLogPage";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Label } from "../components/ui/Label";
+import { useAssetDashboard } from "../hooks/useAssetDashboard";
+import { cn } from "../lib/utils";
+
+type AppView = "dashboard" | "operation-logs";
+
+export function App() {
+  const dashboard = useAssetDashboard();
+  const [activeView, setActiveView] = useState<AppView>("dashboard");
+
+  return (
+    <>
+      <main className="app-shell">
+        <section aria-label="月份筛选" className="hero-row">
+          <div>
+            <p className="eyebrow">本地 SQLite 资产台账</p>
+            <h1>资产增值统计</h1>
+          </div>
+          <div className="month-filter-group">
+            <div className="field-stack summary-month-filter">
+              <Label htmlFor="summary-month">统计月份</Label>
+              <div className="month-stepper" aria-label="统计月份快捷切换">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="切换到上一个月"
+                  title="切换到上一个月"
+                  onClick={dashboard.goToPreviousMonth}
+                >
+                  <ChevronLeft aria-hidden="true" />
+                </Button>
+                <Input
+                  id="summary-month"
+                  type="month"
+                  value={dashboard.month}
+                  onChange={(event) => dashboard.changeMonth(event.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="切换到下一个月"
+                  title="切换到下一个月"
+                  onClick={dashboard.goToNextMonth}
+                >
+                  <ChevronRight aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="dashboard-controls-row" aria-label="页面导航与对比筛选">
+          <nav className="view-tabs" aria-label="页面导航">
+            <Button
+              type="button"
+              variant={activeView === "dashboard" ? "default" : "outline"}
+              className={cn(activeView === "dashboard" && "view-tab-active")}
+              onClick={() => setActiveView("dashboard")}
+            >
+              资产统计
+            </Button>
+            <Button
+              type="button"
+              variant={activeView === "operation-logs" ? "default" : "outline"}
+              className={cn(activeView === "operation-logs" && "view-tab-active")}
+              onClick={() => setActiveView("operation-logs")}
+            >
+              操作记录
+            </Button>
+          </nav>
+          <div className="field-stack compare-month-filter">
+            <Label htmlFor="compare-month">对比月份</Label>
+            <Input
+              id="compare-month"
+              type="month"
+              value={dashboard.compareMonth}
+              onChange={(event) => dashboard.changeCompareMonth(event.target.value)}
+            />
+          </div>
+        </section>
+
+        {activeView === "dashboard" ? (
+          <>
+            <MetricsGrid compareMonth={dashboard.compareMonth} summary={dashboard.summary} />
+
+            <section className="forms-grid">
+              <AssetTypeForm
+                description={dashboard.assetTypeDescription}
+                name={dashboard.assetTypeName}
+                onDescriptionChange={dashboard.setAssetTypeDescription}
+                onNameChange={dashboard.setAssetTypeName}
+                onSubmit={dashboard.submitAssetType}
+              />
+              <RecordForm
+                assetTypes={dashboard.assetTypes}
+                editingRecord={dashboard.editingRecord}
+                form={dashboard.recordForm}
+                selectedAssetTypeId={dashboard.selectedAssetTypeId}
+                onCancelEdit={dashboard.resetRecordForm}
+                onFieldChange={dashboard.updateRecordField}
+                onSubmit={dashboard.submitRecord}
+              />
+            </section>
+
+            <AssetDetailTable
+              items={dashboard.summary?.items ?? []}
+              status={dashboard.status}
+              statusType={dashboard.statusType}
+              onEditRecord={dashboard.editRecord}
+              onOpenHistory={dashboard.openHistory}
+              onRecordAssetType={dashboard.recordAssetType}
+              onRequestDeleteRecord={dashboard.requestDeleteRecord}
+            />
+          </>
+        ) : (
+          <OperationLogPage onRestored={() => dashboard.refreshDashboard("删除记录已恢复")} />
+        )}
+      </main>
+
+      <HistoryDrawer
+        asset={dashboard.drawerAsset}
+        history={dashboard.drawerHistory}
+        isLoading={dashboard.isHistoryLoading}
+        onOpenChange={dashboard.setDrawerOpen}
+      />
+      <DeleteRecordDialog
+        confirmStep={dashboard.deleteConfirmStep}
+        isDeleting={dashboard.isDeletingRecord}
+        record={dashboard.pendingDeleteRecord}
+        onCancel={dashboard.cancelDeleteRecord}
+        onConfirmStep={dashboard.confirmDeleteRecord}
+      />
+    </>
+  );
+}

@@ -1,0 +1,19 @@
+.detail-table {
+  min-width: 920px;
+}
+
+.pending-record-text {
+  color: #66716b;
+  font-weight: 700;
+}
+
+.asset-link-button {
+  height: auto;
+  padding: 0;
+  font-weight: 800;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+}

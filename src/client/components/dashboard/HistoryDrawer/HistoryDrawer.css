@@ -1,0 +1,18 @@
+.sheet-note {
+  margin: 0;
+  color: #66716b;
+}
+
+.chart-panel {
+  margin-top: 20px;
+  padding: 16px;
+  box-shadow: none;
+}
+
+.drawer-table {
+  margin-top: 20px;
+}
+
+.drawer-table .ui-table {
+  min-width: 480px;
+}

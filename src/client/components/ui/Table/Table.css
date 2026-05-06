@@ -1,0 +1,27 @@
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ui-table-head,
+.ui-table-cell {
+  border-bottom: 1px solid #dfe5dc;
+  padding: 13px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ui-table-head {
+  color: #66716b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.empty-cell {
+  color: #66716b;
+  text-align: center;
+}

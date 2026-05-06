@@ -88,7 +88,22 @@ test("serves separated client stylesheet", async () => {
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(response.headers.get("content-type")).toContain("text/css");
-  expect(stylesheet).toContain(".app-shell");
+  expect(stylesheet).toContain('@import "./App/App.css"');
+});
+
+test("serves imported component stylesheets from the client tree only", async () => {
+  const appStylesResponse = await app.request("/assets/App/App.css");
+  const appStyles = await appStylesResponse.text();
+  const componentStylesResponse = await app.request(
+    "/assets/components/dashboard/AssetDetailTable/AssetDetailTable.css"
+  );
+  const outsideResponse = await app.request("/assets/../server/app.ts");
+
+  expect(appStylesResponse.status).toBe(200);
+  expect(appStyles).toContain(".app-shell");
+  expect(componentStylesResponse.status).toBe(200);
+  expect(await componentStylesResponse.text()).toContain(".detail-table");
+  expect(outsideResponse.status).toBe(404);
 });
 
 test("rejects malformed JSON and invalid asset type names", async () => {

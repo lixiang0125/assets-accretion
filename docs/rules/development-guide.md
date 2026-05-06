@@ -25,13 +25,15 @@
 
 - `src/client/`：浏览器端 React 应用。
   - `main.tsx` 只负责挂载 React。
-  - `App.tsx` 只做页面编排，不堆业务组件实现和样式。
-  - `components/ui/` 放 shadcn/ui 风格基础组件。
-  - `components/dashboard/` 放资产台账业务组件。
-  - `components/operations/` 放操作记录、审计和恢复相关业务组件。
+  - `App/` 放客户端页面编排层；`App.tsx` 只做页面编排，不堆业务组件实现和样式。
+  - `components/ui/` 放 shadcn/ui 风格基础组件，每个组件一个目录。
+  - `components/dashboard/` 放资产台账业务组件，每个组件一个目录。
+  - `components/operations/` 放操作记录、审计和恢复相关业务组件，每个组件一个目录。
   - `api/` 放浏览器端接口请求封装。
   - `hooks/` 放页面状态和业务动作。
-  - `styles.css` 放全局样式和组件样式；不要把大块 CSS-in-JS 或内联 style 堆在组件里。
+  - `styles.css` 只作为样式入口，使用 `@import` 组织样式。
+  - `styles/` 只放全局基础样式；页面级布局样式跟随页面组件目录。
+  - 组件样式必须放到对应组件目录，例如 `components/dashboard/MetricCard/MetricCard.css`、`components/ui/Button/Button.css`。
   - `document.tsx` 是服务端返回的 HTML document 壳。
 - `src/server/`：服务端运行时代码。
   - `app.ts` 只组装 Hono app、页面、静态资源、API 路由和错误处理。
@@ -47,8 +49,12 @@
 - 客户端不得直接访问 SQLite 或 `bun:sqlite`。
 - 服务端可以服务 React document 和 bundle，但业务 UI 状态必须留在 `src/client/`。
 - 业务组件不得直接复制 shadcn/Radix 细节；优先组合 `components/ui/` 下的基础组件。
-- 新增较大的页面区块时，先放入独立业务组件文件；不要继续扩张 `App.tsx` 或 `main.tsx`。
-- 样式优先写入 `styles.css` 的可复用 class；只允许为动态、极小且不可复用的样式使用内联 style。
+- 新增较大的页面区块时，先放入独立业务组件目录；不要继续扩张 `App/App.tsx` 或 `main.tsx`。
+- 每个组件目录应包含组件实现、同名 CSS（如需要）和 `index.ts` 导出；外部调用优先 import 组件目录，不直接依赖内部文件路径。
+- 样式优先写入组件同目录 CSS 文件；`styles.css` 不承载具体组件样式，只维护 import 顺序。
+- 新增组件时同步评估是否需要同目录 CSS 文件；不要把业务组件样式堆入全局或其他组件 CSS。
+- 只允许为动态、极小且不可复用的样式使用内联 style。
+- 拆分 CSS 后必须保证 `/assets/styles.css` 引用到的 `@import` 路径也能由服务端静态路由访问，并补静态资源测试。
 - 金额展示必须通过 `src/client/lib/format.ts` 的统一格式化函数；超过 1000 的金额用 K/M/B 缩写并保留两位小数，不要在组件里手写本地规则。
 - 后端接口逻辑必须放在 `src/server/api/`，`app.ts` 不承载具体业务路由实现。
 - 后端每个接口必须单独文件维护，例如 `records/create-record.ts`、`records/delete-record.ts`；不要把同一资源的多个 endpoint 继续堆在一个大文件里。

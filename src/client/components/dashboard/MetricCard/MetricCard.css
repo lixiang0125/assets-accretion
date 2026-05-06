@@ -1,0 +1,22 @@
+.metric-card-content {
+  display: grid;
+  gap: 10px;
+}
+
+.metric-label {
+  color: #66716b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.metric-description {
+  color: #66716b;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.metric-value {
+  font-size: 25px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
