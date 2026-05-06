@@ -5,7 +5,7 @@ import { DeleteRecordDialog } from "../components/dashboard/DeleteRecordDialog";
 import { AssetTypeForm } from "../components/dashboard/AssetTypeForm";
 import { HistoryDrawer } from "../components/dashboard/HistoryDrawer";
 import { MetricsGrid } from "../components/dashboard/MetricsGrid";
-import { RecordForm } from "../components/dashboard/RecordForm";
+import { RecordDrawer } from "../components/dashboard/RecordDrawer";
 import { OperationLogPage } from "../components/operations/OperationLogPage";
 import { Button } from "../components/ui/Button";
 import {
@@ -30,32 +30,11 @@ export function App() {
   return (
     <>
       <main className="app-shell">
-        <section aria-label="月份筛选" className="hero-row">
+        <section aria-label="页面标题与月份筛选" className="hero-row">
           <div>
             <p className="eyebrow">本地 SQLite 资产台账</p>
             <h1>资产增值统计</h1>
           </div>
-        </section>
-
-        <section className="dashboard-controls-row" aria-label="页面导航与对比筛选">
-          <nav className="view-tabs" aria-label="页面导航">
-            <Button
-              type="button"
-              variant={activeView === "dashboard" ? "default" : "outline"}
-              className={cn(activeView === "dashboard" && "view-tab-active")}
-              onClick={() => setActiveView("dashboard")}
-            >
-              资产统计
-            </Button>
-            <Button
-              type="button"
-              variant={activeView === "operation-logs" ? "default" : "outline"}
-              className={cn(activeView === "operation-logs" && "view-tab-active")}
-              onClick={() => setActiveView("operation-logs")}
-            >
-              操作记录
-            </Button>
-          </nav>
           <div className="period-panel" aria-label="月份筛选">
             <div className="field-stack summary-month-filter">
               <Label htmlFor="summary-month">统计月份</Label>
@@ -100,30 +79,37 @@ export function App() {
           </div>
         </section>
 
+        <section className="dashboard-controls-row" aria-label="页面导航与资产类型操作">
+          <nav className="view-tabs" aria-label="页面导航">
+            <Button
+              type="button"
+              variant={activeView === "dashboard" ? "default" : "outline"}
+              className={cn(activeView === "dashboard" && "view-tab-active")}
+              onClick={() => setActiveView("dashboard")}
+            >
+              资产统计
+            </Button>
+            <Button
+              type="button"
+              variant={activeView === "operation-logs" ? "default" : "outline"}
+              className={cn(activeView === "operation-logs" && "view-tab-active")}
+              onClick={() => setActiveView("operation-logs")}
+            >
+              操作记录
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAssetTypeDialogOpen(true)}
+            >
+              添加资产类型
+            </Button>
+          </nav>
+        </section>
+
         {activeView === "dashboard" ? (
           <>
             <MetricsGrid compareMonth={dashboard.compareMonth} summary={dashboard.summary} />
-
-            <section className="record-workspace">
-              <RecordForm
-                assetTypes={dashboard.assetTypes}
-                editingRecord={dashboard.editingRecord}
-                form={dashboard.recordForm}
-                selectedAssetTypeId={dashboard.selectedAssetTypeId}
-                onCancelEdit={dashboard.resetRecordForm}
-                onFieldChange={dashboard.updateRecordField}
-                onSubmit={dashboard.submitRecord}
-              />
-              <Button
-                className="asset-type-entry"
-                type="button"
-                variant="outline"
-                onClick={() => setIsAssetTypeDialogOpen(true)}
-              >
-                添加资产类型
-              </Button>
-            </section>
-
             <AssetDetailTable
               items={dashboard.summary?.items ?? []}
               status={dashboard.status}
@@ -144,6 +130,17 @@ export function App() {
         history={dashboard.drawerHistory}
         isLoading={dashboard.isHistoryLoading}
         onOpenChange={dashboard.setDrawerOpen}
+      />
+      <RecordDrawer
+        assetTypes={dashboard.assetTypes}
+        editingRecord={dashboard.editingRecord}
+        form={dashboard.recordForm}
+        isOpen={dashboard.isRecordDrawerOpen}
+        selectedAssetTypeId={dashboard.selectedAssetTypeId}
+        onCancelEdit={dashboard.resetRecordForm}
+        onFieldChange={dashboard.updateRecordField}
+        onOpenChange={dashboard.changeRecordDrawerOpen}
+        onSubmit={dashboard.submitRecord}
       />
       <DeleteRecordDialog
         confirmStep={dashboard.deleteConfirmStep}

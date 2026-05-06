@@ -3,6 +3,8 @@
 本地资产增值统计工具。后端使用 Bun + TypeScript + Hono，数据写入本地
 SQLite 文件；前端使用 React 提供图形化录入和展示。
 
+![资产增值统计页面截图](docs/assets/dashboard-screenshot.png)
+
 ## 功能
 
 - 添加资产类型，例如现金、股票、基金、房产。

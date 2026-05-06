@@ -35,6 +35,7 @@ export function useAssetDashboard() {
   const [assetTypeDescription, setAssetTypeDescription] = useState("");
   const [recordForm, setRecordForm] = useState<RecordFormState>(emptyRecordForm);
   const [editingRecord, setEditingRecord] = useState<SummaryItem | null>(null);
+  const [isRecordDrawerOpen, setIsRecordDrawerOpen] = useState(false);
   const [pendingDeleteRecord, setPendingDeleteRecord] = useState<SummaryItem | null>(null);
   const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
   const [isDeletingRecord, setIsDeletingRecord] = useState(false);
@@ -103,6 +104,7 @@ export function useAssetDashboard() {
 
   function resetRecordForm() {
     setEditingRecord(null);
+    setIsRecordDrawerOpen(false);
     setRecordForm({
       assetTypeId: selectedAssetTypeId,
       month,
@@ -139,8 +141,8 @@ export function useAssetDashboard() {
         { ...recordForm, assetTypeId: selectedAssetTypeId },
         editingRecord?.id ?? undefined
       );
-      resetRecordForm();
       await refresh(editingRecord ? "月度价值已更新" : "月度价值已保存");
+      resetRecordForm();
     } catch (error) {
       showError(error);
     }
@@ -193,6 +195,7 @@ export function useAssetDashboard() {
       value: String(item.value),
       note: item.note ?? "",
     });
+    setIsRecordDrawerOpen(true);
     setStatus("正在编辑月度记录");
     setStatusType("idle");
   }
@@ -205,8 +208,17 @@ export function useAssetDashboard() {
       value: "",
       note: "",
     });
+    setIsRecordDrawerOpen(true);
     setStatus(`正在记录「${item.assetTypeName}」${item.month} 的月度价值`);
     setStatusType("idle");
+  }
+
+  function changeRecordDrawerOpen(open: boolean) {
+    if (!open) {
+      resetRecordForm();
+      return;
+    }
+    setIsRecordDrawerOpen(true);
   }
 
   function requestDeleteRecord(item: SummaryItem) {
@@ -280,6 +292,7 @@ export function useAssetDashboard() {
     editingRecord,
     deleteConfirmStep,
     isHistoryLoading,
+    isRecordDrawerOpen,
     isDeletingRecord,
     month,
     pendingDeleteRecord,
@@ -290,6 +303,7 @@ export function useAssetDashboard() {
     summary,
     changeMonth,
     changeCompareMonth,
+    changeRecordDrawerOpen,
     cancelDeleteRecord,
     confirmDeleteRecord,
     editRecord,

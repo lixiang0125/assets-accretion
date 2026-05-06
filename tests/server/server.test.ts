@@ -97,12 +97,17 @@ test("serves imported component stylesheets from the client tree only", async ()
   const componentStylesResponse = await app.request(
     "/assets/components/dashboard/AssetDetailTable/AssetDetailTable.css"
   );
+  const drawerStylesResponse = await app.request(
+    "/assets/components/dashboard/RecordDrawer/RecordDrawer.css"
+  );
   const outsideResponse = await app.request("/assets/../server/app.ts");
 
   expect(appStylesResponse.status).toBe(200);
   expect(appStyles).toContain(".app-shell");
   expect(componentStylesResponse.status).toBe(200);
   expect(await componentStylesResponse.text()).toContain(".detail-table");
+  expect(drawerStylesResponse.status).toBe(200);
+  expect(await drawerStylesResponse.text()).toContain(".record-drawer-body");
   expect(outsideResponse.status).toBe(404);
 });
 

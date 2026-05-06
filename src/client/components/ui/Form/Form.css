@@ -1,5 +1,6 @@
 .form-stack,
-.field-stack {
+.field-stack,
+.form-actions {
   display: grid;
 }
 
@@ -9,6 +10,15 @@
 
 .field-stack {
   gap: 8px;
+}
+
+.form-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.form-actions .ui-button:only-child {
+  grid-column: 1 / -1;
 }
 
 .status-text {
