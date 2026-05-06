@@ -97,14 +97,10 @@ export function App() {
             >
               操作记录
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsAssetTypeDialogOpen(true)}
-            >
-              添加资产类型
-            </Button>
           </nav>
+          <Button type="button" variant="outline" onClick={() => setIsAssetTypeDialogOpen(true)}>
+            添加资产类型
+          </Button>
         </section>
 
         {activeView === "dashboard" ? (
