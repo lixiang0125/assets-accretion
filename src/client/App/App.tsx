@@ -8,6 +8,13 @@ import { MetricsGrid } from "../components/dashboard/MetricsGrid";
 import { RecordForm } from "../components/dashboard/RecordForm";
 import { OperationLogPage } from "../components/operations/OperationLogPage";
 import { Button } from "../components/ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/Dialog";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { useAssetDashboard } from "../hooks/useAssetDashboard";
@@ -18,6 +25,7 @@ type AppView = "dashboard" | "operation-logs";
 export function App() {
   const dashboard = useAssetDashboard();
   const [activeView, setActiveView] = useState<AppView>("dashboard");
+  const [isAssetTypeDialogOpen, setIsAssetTypeDialogOpen] = useState(false);
 
   return (
     <>
@@ -96,14 +104,7 @@ export function App() {
           <>
             <MetricsGrid compareMonth={dashboard.compareMonth} summary={dashboard.summary} />
 
-            <section className="forms-grid">
-              <AssetTypeForm
-                description={dashboard.assetTypeDescription}
-                name={dashboard.assetTypeName}
-                onDescriptionChange={dashboard.setAssetTypeDescription}
-                onNameChange={dashboard.setAssetTypeName}
-                onSubmit={dashboard.submitAssetType}
-              />
+            <section className="record-workspace">
               <RecordForm
                 assetTypes={dashboard.assetTypes}
                 editingRecord={dashboard.editingRecord}
@@ -113,6 +114,14 @@ export function App() {
                 onFieldChange={dashboard.updateRecordField}
                 onSubmit={dashboard.submitRecord}
               />
+              <Button
+                className="asset-type-entry"
+                type="button"
+                variant="outline"
+                onClick={() => setIsAssetTypeDialogOpen(true)}
+              >
+                添加资产类型
+              </Button>
             </section>
 
             <AssetDetailTable
@@ -143,6 +152,28 @@ export function App() {
         onCancel={dashboard.cancelDeleteRecord}
         onConfirmStep={dashboard.confirmDeleteRecord}
       />
+      <Dialog open={isAssetTypeDialogOpen} onOpenChange={setIsAssetTypeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>添加资产类型</DialogTitle>
+            <DialogDescription>
+              资产类型只需要创建一次，后续每个月直接记录它的价值。
+            </DialogDescription>
+          </DialogHeader>
+          <AssetTypeForm
+            description={dashboard.assetTypeDescription}
+            name={dashboard.assetTypeName}
+            onDescriptionChange={dashboard.setAssetTypeDescription}
+            onNameChange={dashboard.setAssetTypeName}
+            onSubmit={async (event) => {
+              const created = await dashboard.submitAssetType(event);
+              if (created) {
+                setIsAssetTypeDialogOpen(false);
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

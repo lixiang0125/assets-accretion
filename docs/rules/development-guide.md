@@ -161,3 +161,28 @@ Smoke 规则：
 - 数据库文件没有进入暂存区。
 - 提交前用 `git diff --cached --name-only` 确认暂存区只包含预期源码、测试和文档文件。
 - 若项目结构、脚本、API 或数据契约变化，已同步更新 `docs/` 与 `README.md`。
+
+## Commit 规范
+
+提交首行必须使用 Conventional Commits 格式：
+
+```text
+<类型>: <简短描述>
+```
+
+常用类型：
+
+- `feat:` 新功能、新页面、新模块。
+- `fix:` 修复 bug、报错或错误行为。
+- `docs:` 只改文档或注释。
+- `style:` 只改格式、空格、分号等不影响逻辑的内容。
+- `refactor:` 重构代码，不新增功能也不修 bug。
+- `test:` 新增或修改测试。
+- `chore:` 构建、依赖、工具配置等维护事项。
+
+规则：
+
+- 类型后必须是英文冒号和一个空格。
+- 描述简短清晰，不超过 50 字，不以句号结尾。
+- 一次提交只做一件事。
+- 如需保留决策背景，可在正文继续使用 `Constraint:`、`Rejected:`、`Tested:` 等 git trailer，但首行必须先满足 Conventional Commits。

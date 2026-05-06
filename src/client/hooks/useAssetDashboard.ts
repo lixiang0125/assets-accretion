@@ -125,8 +125,10 @@ export function useAssetDashboard() {
       setAssetTypeName("");
       setAssetTypeDescription("");
       await refresh("资产类型已添加");
+      return true;
     } catch (error) {
       showError(error);
+      return false;
     }
   }
 
