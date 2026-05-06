@@ -34,6 +34,32 @@ SQLite 默认文件位于 `data/assets.sqlite`，已加入 `.gitignore`。
 
 业务时间统一采用东八区（GMT+8），包括本地 SQLite 中的创建、更新、恢复时间以及前端默认月份。
 
+## 数据迁移
+
+迁移或备份数据前，先停止正在运行的本地服务，避免复制到写入中的 SQLite 文件。
+
+默认数据文件以 `data/assets.sqlite` 为前缀，复制时包含主库、WAL 和 SHM 文件：
+
+```bash
+cp data/assets.sqlite* /你的备份目录/
+```
+
+恢复时同样先停止服务，再把这些文件放回 `data/` 目录。
+
+如果启动服务时指定了自定义数据库路径，例如：
+
+```bash
+ASSETS_DB_PATH=/some/path/my-assets.sqlite bun run dev
+```
+
+则迁移同名前缀的一组文件：
+
+```bash
+cp /some/path/my-assets.sqlite* /你的备份目录/
+```
+
+资产类型、月度记录、操作记录和删除恢复快照都在同一个 SQLite 数据库内，不需要额外迁移其他 db 文件。`.omx/`、`node_modules/` 和 `data/*.sqlite*` 都不应提交到 git。
+
 ## 架构概览
 
 - `src/client/components/ui/`：shadcn/ui 风格基础组件。
