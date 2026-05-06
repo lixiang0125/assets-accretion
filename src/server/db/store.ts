@@ -137,6 +137,33 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       return row ? mapAssetType(row) : null;
     },
 
+    updateAssetType(
+      assetTypeId: number,
+      input: { name: string; description?: string | null }
+    ) {
+      const name = input.name.trim();
+      const description = input.description?.trim() || null;
+      db.query(
+        `
+        UPDATE asset_types
+        SET name = $name,
+            description = $description
+        WHERE id = $assetTypeId
+      `
+      ).run({
+        $assetTypeId: assetTypeId,
+        $name: name,
+        $description: description,
+      });
+
+      const row = db
+        .query<AssetTypeRow, [number]>(
+          "SELECT id, name, description, created_at FROM asset_types WHERE id = ?"
+        )
+        .get(assetTypeId);
+      return row ? mapAssetType(row) : null;
+    },
+
     upsertRecord(input: {
       assetTypeId: number;
       month: string;
@@ -163,6 +190,37 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       return this.getRecord(input.assetTypeId, input.month);
     },
 
+    updateRecord(
+      recordId: number,
+      input: {
+        assetTypeId: number;
+        month: string;
+        value: number;
+        note?: string | null;
+      }
+    ) {
+      const note = input.note?.trim() || null;
+      db.query(
+        `
+        UPDATE asset_records
+        SET asset_type_id = $assetTypeId,
+            month = $month,
+            value = $value,
+            note = $note,
+            updated_at = datetime('now')
+        WHERE id = $recordId
+      `
+      ).run({
+        $recordId: recordId,
+        $assetTypeId: input.assetTypeId,
+        $month: input.month,
+        $value: input.value,
+        $note: note,
+      });
+
+      return this.getRecordById(recordId);
+    },
+
     getRecord(assetTypeId: number, month: string) {
       const row = db
         .query<AssetRecordRow, [number, string]>(
@@ -184,6 +242,36 @@ export function createAssetStore(filename = "data/assets.sqlite") {
         .get(assetTypeId, month);
 
       return row ? mapRecord(row) : null;
+    },
+
+    getRecordById(recordId: number) {
+      const row = db
+        .query<AssetRecordRow, [number]>(
+          `
+          SELECT
+            r.id,
+            r.asset_type_id,
+            t.name AS asset_type_name,
+            r.month,
+            r.value,
+            r.note,
+            r.created_at,
+            r.updated_at
+          FROM asset_records r
+          JOIN asset_types t ON t.id = r.asset_type_id
+          WHERE r.id = ?
+        `
+        )
+        .get(recordId);
+
+      return row ? mapRecord(row) : null;
+    },
+
+    deleteRecord(recordId: number) {
+      const result = db
+        .query<never, [number]>("DELETE FROM asset_records WHERE id = ?")
+        .run(recordId);
+      return result.changes > 0;
     },
 
     listRecords(month?: string) {
@@ -208,6 +296,40 @@ export function createAssetStore(filename = "data/assets.sqlite") {
         : db.query<AssetRecordRow, []>(sql).all();
 
       return rows.map(mapRecord);
+    },
+
+    listAssetHistory(assetTypeId: number) {
+      const rows = db
+        .query<AssetSummaryRow, [number]>(
+          `
+          SELECT
+            r.id,
+            r.asset_type_id,
+            t.name AS asset_type_name,
+            r.month,
+            r.value,
+            r.note,
+            r.created_at,
+            r.updated_at,
+            prev.month AS previous_month,
+            prev.value AS previous_value
+          FROM asset_records r
+          JOIN asset_types t ON t.id = r.asset_type_id
+          LEFT JOIN asset_records prev ON prev.id = (
+            SELECT p.id
+            FROM asset_records p
+            WHERE p.asset_type_id = r.asset_type_id
+              AND p.month < r.month
+            ORDER BY p.month DESC
+            LIMIT 1
+          )
+          WHERE r.asset_type_id = ?
+          ORDER BY r.month ASC
+        `
+        )
+        .all(assetTypeId);
+
+      return rows.map(mapSummary);
     },
 
     listSummary(month?: string) {

@@ -5,7 +5,9 @@
 `assets-accretion` 是一个本地资产增值统计工具。用户可以：
 
 - 添加资产类型，例如现金、股票、基金、房产。
-- 按月份记录每类资产价值。
+- 每个资产类型只创建一次，按月份持续更新该类型的资产价值。
+- 编辑或删除已保存的月度明细。
+- 点击资产类型，在抽屉中查看月维度变化和折线趋势。
 - 自动对比同一资产类型的上一个记录月份。
 - 查看指定月份的总资产、前期对比值、增值金额和增值率。
 
@@ -101,8 +103,12 @@ SQLite 默认文件：`data/assets.sqlite`
 | `GET` | `/api/health` | 健康检查 |
 | `GET` | `/api/asset-types` | 获取资产类型 |
 | `POST` | `/api/asset-types` | 新增资产类型 |
+| `PUT` | `/api/asset-types/:id` | 更新资产类型名称和备注 |
+| `GET` | `/api/asset-types/:id/history` | 获取单个资产类型的月度变化历史 |
 | `GET` | `/api/records?month=YYYY-MM` | 获取月度记录 |
 | `POST` | `/api/records` | 新增或更新某资产类型某月份价值 |
+| `PUT` | `/api/records/:id` | 编辑已保存的月度记录 |
+| `DELETE` | `/api/records/:id` | 删除已保存的月度记录 |
 | `GET` | `/api/summary?month=YYYY-MM` | 获取指定月份汇总与增值明细 |
 
 ## 关键设计决策
