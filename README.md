@@ -3,20 +3,6 @@
 本地资产增值统计工具。后端使用 Bun + TypeScript + Hono，数据写入本地
 SQLite 文件；前端使用 React 提供图形化录入和展示。
 
-React 客户端入口位于 `src/client/main.tsx`，由 Bun 在 `/assets/app.js`
-动态打包并通过 Hono 服务给浏览器。
-
-## 项目结构
-
-```text
-src/
-  server/    Hono API、服务监听入口和 SQLite 数据访问
-  client/    React 页面和 HTML document 壳
-tests/
-  server/    服务端接口与客户端 bundle 服务测试
-  server-db/ SQLite 数据层测试
-```
-
 ## 功能
 
 - 添加资产类型，例如现金、股票、基金、房产。
@@ -38,8 +24,17 @@ bun run dev
 
 SQLite 默认文件位于 `data/assets.sqlite`，已加入 `.gitignore`。
 
+## 项目文档
+
+- `AGENTS.md`：Agent 执行入口和仓库规则。
+- `CLAUDE.md`：指向 `AGENTS.md` 的软链，避免并行维护两份规则。
+- `docs/README.md`：规则库和知识库索引。
+- `docs/rules/development-guide.md`：开发、架构边界、验证与提交要求。
+- `docs/knowledge-base/project-overview.md`：技术栈、目录结构、数据模型和 API 说明。
+
 ## API
 
+- `GET /api/health`
 - `GET /api/asset-types`
 - `POST /api/asset-types`
 - `GET /api/records?month=YYYY-MM`
