@@ -13,6 +13,28 @@
   font-weight: 800;
 }
 
+.sortable-head-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+}
+
+.sortable-head-button:hover {
+  color: var(--color-text);
+}
+
+.sortable-head-button svg {
+  width: 14px;
+  height: 14px;
+}
+
 .row-actions {
   display: flex;
   gap: 8px;

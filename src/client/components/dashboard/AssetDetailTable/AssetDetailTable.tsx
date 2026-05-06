@@ -1,3 +1,5 @@
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { SummaryItem } from "../../../types";
 import { formatCurrency, formatPercent, toneClass } from "../../../lib/format";
 import { cn } from "../../../lib/utils";
@@ -11,6 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/Table";
+import {
+  nextSortState,
+  sortSummaryItems,
+  type AssetDetailSortKey,
+  type AssetDetailSortState,
+} from "./sort";
 
 type AssetDetailTableProps = {
   items: SummaryItem[];
@@ -22,8 +30,6 @@ type AssetDetailTableProps = {
   onOpenHistory: (item: SummaryItem) => void;
 };
 
-const headings = ["资产类型", "月份", "当月价值", "对比时间点", "增值金额", "增值率", "操作"];
-
 export function AssetDetailTable({
   items,
   status,
@@ -33,6 +39,12 @@ export function AssetDetailTable({
   onRecordAssetType,
   onRequestDeleteRecord,
 }: AssetDetailTableProps) {
+  const [sortState, setSortState] = useState<AssetDetailSortState | null>(null);
+  const sortedItems = useMemo(
+    () => sortSummaryItems(items, sortState),
+    [items, sortState]
+  );
+
   return (
     <Card aria-label="资产明细" role="region">
       <CardHeader className="section-title-row">
@@ -46,20 +58,39 @@ export function AssetDetailTable({
           <Table className="detail-table">
             <TableHeader>
               <TableRow>
-                {headings.map((heading) => (
-                  <TableHead key={heading}>{heading}</TableHead>
-                ))}
+                <TableHead>资产类型</TableHead>
+                <TableHead>月份</TableHead>
+                <SortableTableHead
+                  label="当月价值"
+                  sortKey="value"
+                  sortState={sortState}
+                  onSort={setSortState}
+                />
+                <TableHead>对比时间点</TableHead>
+                <SortableTableHead
+                  label="增值金额"
+                  sortKey="changeValue"
+                  sortState={sortState}
+                  onSort={setSortState}
+                />
+                <SortableTableHead
+                  label="增值率"
+                  sortKey="changeRate"
+                  sortState={sortState}
+                  onSort={setSortState}
+                />
+                <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.length === 0 ? (
+              {sortedItems.length === 0 ? (
                 <TableRow>
                   <TableCell className="empty-cell" colSpan={7}>
                     还没有资产类型
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => {
+                sortedItems.map((item) => {
                   const changeTone = toneClass(item.changeValue);
                   return (
                     <TableRow key={`${item.assetTypeId}-${item.month}`}>
@@ -120,5 +151,44 @@ export function AssetDetailTable({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function SortableTableHead({
+  label,
+  sortKey,
+  sortState,
+  onSort,
+}: {
+  label: string;
+  sortKey: AssetDetailSortKey;
+  sortState: AssetDetailSortState | null;
+  onSort: Dispatch<SetStateAction<AssetDetailSortState | null>>;
+}) {
+  const isActive = sortState?.key === sortKey;
+  const direction = isActive ? sortState.direction : null;
+  const ariaSort =
+    direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none";
+
+  return (
+    <TableHead aria-sort={ariaSort}>
+      <button
+        className="sortable-head-button"
+        type="button"
+        aria-label={`${label}排序`}
+        onClick={() => onSort((current) => nextSortState(current, sortKey))}
+      >
+        <span>{label}</span>
+        {isActive ? (
+          direction === "desc" ? (
+            <ArrowDown aria-hidden="true" />
+          ) : (
+            <ArrowUp aria-hidden="true" />
+          )
+        ) : (
+          <ChevronsUpDown aria-hidden="true" />
+        )}
+      </button>
+    </TableHead>
   );
 }
