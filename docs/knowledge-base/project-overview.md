@@ -13,6 +13,7 @@
 - 点击资产类型，在抽屉中查看月维度变化和折线趋势。
 - 自动对比同一资产类型的上一个记录月份。
 - 查看指定月份的总资产、前期对比值、增值金额和增值率。
+- 金额超过 1000 时使用 K/M/B 缩写并保留两位小数，避免长金额挤占表格和图表空间。
 
 核心约束：
 
@@ -48,7 +49,7 @@ src/
     styles.css         客户端全局样式和组件样式
     types.ts           客户端领域类型
   server/
-    api/               Hono API 路由和 HTTP 校验 helpers
+    api/               Hono API 路由；每个 endpoint 一个文件，资源 index 只负责组装
     app.ts             Hono app 工厂、页面、静态资源和 API 组装
     server.ts          Bun.serve 监听入口
     db/
@@ -156,8 +157,9 @@ SQLite 默认文件：`data/assets.sqlite`
 
 - 本地优先：SQLite 文件默认落在 `data/`，并通过 `.gitignore` 避免提交。
 - 轻量依赖：SQLite 使用 Bun 标准能力，不额外引入 ORM。
-- 清晰边界：客户端、服务端、测试分目录维护；前端组件、样式、API 请求和状态 hook 分层放置；后端 API 路由与 SQLite store 分离。
+- 清晰边界：客户端、服务端、测试分目录维护；前端组件、样式、API 请求和状态 hook 分层放置；后端 API 路由与 SQLite store 分离，且每个后端 endpoint 独立文件维护。
 - shadcn/ui 本地化：`src/client/components/ui/` 保存可维护的 shadcn/ui 风格组件源码，业务组件只组合这些基础组件，不直接复制 Radix 细节。
 - 可注入 app：`createApp(store)` 是刻意保留的测试隔离点，测试和冒烟验证应传入临时 SQLite store，避免写入真实本地账本。
 - 动态 bundle：当前由 Hono 在 `/assets/app.js` 请求时调用 `Bun.build` 打包客户端，适合本地开发；未来如需生产部署，可改为固定 build 产物和缓存策略。
 - 删除可恢复：删除记录不是直接不可逆地丢弃上下文，而是通过操作日志保存快照；恢复接口只恢复原始快照，不覆盖后来新建的同月记录。
+- 展示层压缩金额：压缩只发生在客户端展示层，数据库和 API 仍保存完整数字，避免精度和计算逻辑被展示格式污染。

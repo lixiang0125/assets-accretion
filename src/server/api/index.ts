@@ -1,14 +1,15 @@
 import { Hono } from "hono";
 import type { AssetStore } from "../db/store";
-import { createAssetTypeRoutes } from "./asset-types";
-import { createOperationLogRoutes } from "./operation-logs";
-import { createRecordRoutes } from "./records";
-import { createSummaryRoutes } from "./summary";
+import { createAssetTypeRoutes } from "./asset-types/index";
+import { registerGetHealthRoute } from "./health/get-health";
+import { createOperationLogRoutes } from "./operation-logs/index";
+import { createRecordRoutes } from "./records/index";
+import { createSummaryRoutes } from "./summary/index";
 
 export function createApiRoutes(store: AssetStore) {
   const api = new Hono();
 
-  api.get("/health", (c) => c.json({ ok: true }));
+  registerGetHealthRoute(api);
   api.route("/asset-types", createAssetTypeRoutes(store));
   api.route("/operation-logs", createOperationLogRoutes(store));
   api.route("/records", createRecordRoutes(store));

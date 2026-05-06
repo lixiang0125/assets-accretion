@@ -4,13 +4,26 @@ const currencyFormatter = new Intl.NumberFormat("zh-CN", {
   maximumFractionDigits: 2,
 });
 
+const compactCurrencyUnits = [
+  { suffix: "B", value: 1_000_000_000 },
+  { suffix: "M", value: 1_000_000 },
+  { suffix: "K", value: 1_000 },
+] as const;
+
 const percentFormatter = new Intl.NumberFormat("zh-CN", {
   style: "percent",
   maximumFractionDigits: 2,
 });
 
 export function formatCurrency(value: number | null | undefined) {
-  return value === null || value === undefined ? "--" : currencyFormatter.format(value);
+  if (value === null || value === undefined) return "--";
+  const absoluteValue = Math.abs(value);
+  if (absoluteValue <= 1000) return currencyFormatter.format(value);
+
+  const unit = compactCurrencyUnits.find((item) => absoluteValue >= item.value);
+  if (!unit) return currencyFormatter.format(value);
+
+  return `${value < 0 ? "-" : ""}¥${(absoluteValue / unit.value).toFixed(2)}${unit.suffix}`;
 }
 
 export function formatPercent(value: number | null | undefined) {

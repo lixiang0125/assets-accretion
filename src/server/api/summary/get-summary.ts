@@ -1,11 +1,9 @@
-import { Hono } from "hono";
+import type { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import type { AssetStore } from "../db/store";
-import { isMonth } from "./http";
+import type { AssetStore } from "../../db/store";
+import { isMonth } from "../http";
 
-export function createSummaryRoutes(store: AssetStore) {
-  const routes = new Hono();
-
+export function registerGetSummaryRoute(routes: Hono, store: AssetStore) {
   routes.get("/", (c) => {
     const month = c.req.query("month");
     if (month !== undefined && !isMonth(month)) {
@@ -13,6 +11,4 @@ export function createSummaryRoutes(store: AssetStore) {
     }
     return c.json(store.getPortfolioSummary(month));
   });
-
-  return routes;
 }

@@ -35,7 +35,7 @@
   - `document.tsx` 是服务端返回的 HTML document 壳。
 - `src/server/`：服务端运行时代码。
   - `app.ts` 只组装 Hono app、页面、静态资源、API 路由和错误处理。
-  - `api/` 放 Hono API 路由和 HTTP 校验 helpers。
+  - `api/` 放 Hono API 路由和 HTTP 校验 helpers；资源目录的 `index.ts` 只组装路由，每个具体 endpoint 必须独立文件维护。
   - `server.ts` 只负责读取端口并启动 `Bun.serve`。
   - `db/store.ts` 封装 SQLite 表结构、查询和汇总计算。
 - `tests/`：测试代码。
@@ -49,7 +49,9 @@
 - 业务组件不得直接复制 shadcn/Radix 细节；优先组合 `components/ui/` 下的基础组件。
 - 新增较大的页面区块时，先放入独立业务组件文件；不要继续扩张 `App.tsx` 或 `main.tsx`。
 - 样式优先写入 `styles.css` 的可复用 class；只允许为动态、极小且不可复用的样式使用内联 style。
+- 金额展示必须通过 `src/client/lib/format.ts` 的统一格式化函数；超过 1000 的金额用 K/M/B 缩写并保留两位小数，不要在组件里手写本地规则。
 - 后端接口逻辑必须放在 `src/server/api/`，`app.ts` 不承载具体业务路由实现。
+- 后端每个接口必须单独文件维护，例如 `records/create-record.ts`、`records/delete-record.ts`；不要把同一资源的多个 endpoint 继续堆在一个大文件里。
 - Hono app 必须通过 `createApp(store)` 支持注入 `AssetStore`；不要在测试路径 import 时隐式打开默认 `data/assets.sqlite`。
 - 默认 SQLite store 只能在运行入口或显式默认 app 工厂中创建，避免模块加载副作用污染本地账本。
 - 测试不得放回 `src/` 根目录；保持运行时代码与验证代码分离。
@@ -110,6 +112,7 @@
 - 新增或修改 API 时，至少覆盖成功路径、输入校验失败、资源不存在、唯一约束/冲突和状态变化后的再次查询。
 - 新增或修改 SQLite 行为时，至少覆盖边界月份、删除/更新后的对比关系、空结果和特殊数值，例如上期值为 `0`。
 - 涉及操作记录时，不能只验证日志数量；还要验证 `beforePayload`/`afterPayload`、`reversible`、`restoredAt` 和恢复后的业务查询结果。
+- 涉及展示格式时，给纯格式化函数补单元测试，覆盖边界值、负数和缩写单位。
 - 静态资源和页面壳测试要断言关键响应头与资源引用，避免 CSS/JS 缓存或漏挂载问题再次出现。
 - 不要只断言 HTTP 状态码；还要断言响应体、数据库结果或汇总结果确实符合预期。
 

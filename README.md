@@ -12,6 +12,7 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 - 点击资产类型可在抽屉中查看月维度变化和折线趋势。
 - 自动查找同资产类型的上一个记录月份，计算增值金额和增值率。
 - 汇总指定月份的总资产、前期对比值、总增值金额和总增值率。
+- 金额展示超过 1000 时自动使用 K/M/B 缩写，避免表格和图表被长金额撑开。
 
 ## 开发
 
@@ -32,7 +33,7 @@ SQLite 默认文件位于 `data/assets.sqlite`，已加入 `.gitignore`。
 - `src/client/components/ui/`：shadcn/ui 风格基础组件。
 - `src/client/components/dashboard/`：资产台账业务组件。
 - `src/client/api/`、`src/client/hooks/`、`src/client/styles.css`：分别承载前端请求、页面状态和样式。
-- `src/server/api/`：Hono API 路由和 HTTP 校验。
+- `src/server/api/`：Hono API 路由；每个接口独立文件，资源目录 `index.ts` 只做组装。
 - `src/server/db/`：SQLite schema、查询和增值计算。
 
 ## 项目文档
