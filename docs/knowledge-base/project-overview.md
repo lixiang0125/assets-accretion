@@ -22,7 +22,8 @@
 - 运行时：Bun
 - 服务端：Hono + TypeScript
 - 数据库：Bun 内置 `bun:sqlite`
-- 客户端：React + React DOM
+- 客户端：React + React DOM + shadcn/ui 风格本地组件
+- UI 基础：Radix UI primitives + class-variance-authority + clsx + tailwind-merge
 - 测试：`bun test`
 - 包源：npm 官方 registry `https://registry.npmjs.org/`
 
@@ -31,10 +32,20 @@
 ```text
 src/
   client/
+    App.tsx            客户端页面编排层
+    api/               浏览器端 API 请求封装
+    components/
+      dashboard/       业务组件：表单、指标卡、明细表、历史抽屉和图表
+      ui/              shadcn/ui 风格基础组件
     document.tsx       React 渲染的 HTML document 壳
+    hooks/             页面状态和业务动作 hooks
+    lib/               格式化、样式组合等纯工具
     main.tsx           浏览器端 React 应用入口
+    styles.css         客户端全局样式和组件样式
+    types.ts           客户端领域类型
   server/
-    app.ts             Hono app、API 路由、React bundle 服务
+    api/               Hono API 路由和 HTTP 校验 helpers
+    app.ts             Hono app 工厂、页面、静态资源和 API 组装
     server.ts          Bun.serve 监听入口
     db/
       store.ts         SQLite schema、数据访问与增值计算
@@ -115,5 +126,7 @@ SQLite 默认文件：`data/assets.sqlite`
 
 - 本地优先：SQLite 文件默认落在 `data/`，并通过 `.gitignore` 避免提交。
 - 轻量依赖：SQLite 使用 Bun 标准能力，不额外引入 ORM。
-- 清晰边界：客户端、服务端、测试分目录维护。
+- 清晰边界：客户端、服务端、测试分目录维护；前端组件、样式、API 请求和状态 hook 分层放置；后端 API 路由与 SQLite store 分离。
+- shadcn/ui 本地化：`src/client/components/ui/` 保存可维护的 shadcn/ui 风格组件源码，业务组件只组合这些基础组件，不直接复制 Radix 细节。
+- 可注入 app：`createApp(store)` 是刻意保留的测试隔离点，测试和冒烟验证应传入临时 SQLite store，避免写入真实本地账本。
 - 动态 bundle：当前由 Hono 在 `/assets/app.js` 请求时调用 `Bun.build` 打包客户端，适合本地开发；未来如需生产部署，可改为固定 build 产物和缓存策略。

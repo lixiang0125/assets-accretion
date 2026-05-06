@@ -26,6 +26,14 @@ bun run dev
 
 SQLite 默认文件位于 `data/assets.sqlite`，已加入 `.gitignore`。
 
+## 架构概览
+
+- `src/client/components/ui/`：shadcn/ui 风格基础组件。
+- `src/client/components/dashboard/`：资产台账业务组件。
+- `src/client/api/`、`src/client/hooks/`、`src/client/styles.css`：分别承载前端请求、页面状态和样式。
+- `src/server/api/`：Hono API 路由和 HTTP 校验。
+- `src/server/db/`：SQLite schema、查询和增值计算。
+
 ## 项目文档
 
 - `AGENTS.md`：Agent 执行入口和仓库规则。

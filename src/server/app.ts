@@ -1,32 +1,19 @@
+import { readFileSync } from "node:fs";
 import { Hono } from "hono";
-import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { renderDocument } from "../client/document";
+import { createApiRoutes } from "./api";
 import { createAssetStore, type AssetStore } from "./db/store";
-
-function isMonth(value: unknown): value is string {
-  return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
-}
-
-function parseId(value: unknown) {
-  const id = Number(value);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
-
-async function parseJson<T>(c: Context) {
-  try {
-    return (await c.req.json()) as T;
-  } catch {
-    throw new HTTPException(400, { message: "请求体必须是合法 JSON" });
-  }
-}
 
 export function createApp(store: AssetStore) {
   const app = new Hono();
 
   app.get("/", () =>
     new Response(renderDocument(), {
-      headers: { "Content-Type": "text/html; charset=utf-8" },
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/html; charset=utf-8",
+      },
     })
   );
 
@@ -43,184 +30,23 @@ export function createApp(store: AssetStore) {
     }
 
     return new Response(build.outputs[0], {
-      headers: { "Content-Type": "text/javascript; charset=utf-8" },
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/javascript; charset=utf-8",
+      },
     });
   });
 
-  app.get("/api/health", (c) => c.json({ ok: true }));
+  app.get("/assets/styles.css", () =>
+    new Response(readFileSync("src/client/styles.css"), {
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/css; charset=utf-8",
+      },
+    })
+  );
 
-  app.get("/api/asset-types", (c) => c.json({ items: store.listAssetTypes() }));
-
-  app.post("/api/asset-types", async (c) => {
-    const body = await parseJson<{ name?: unknown; description?: unknown }>(c);
-    if (typeof body.name !== "string" || body.name.trim().length === 0) {
-      throw new HTTPException(400, { message: "资产类型名称不能为空" });
-    }
-
-    try {
-      const assetType = store.createAssetType({
-        name: body.name,
-        description:
-          typeof body.description === "string" ? body.description : undefined,
-      });
-      return c.json({ item: assetType }, 201);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("UNIQUE")) {
-        throw new HTTPException(409, { message: "资产类型已存在" });
-      }
-      throw error;
-    }
-  });
-
-  app.put("/api/asset-types/:id", async (c) => {
-    const assetTypeId = parseId(c.req.param("id"));
-    const body = await parseJson<{ name?: unknown; description?: unknown }>(c);
-    if (assetTypeId === null) {
-      throw new HTTPException(400, { message: "资产类型 id 必须是正整数" });
-    }
-    if (typeof body.name !== "string" || body.name.trim().length === 0) {
-      throw new HTTPException(400, { message: "资产类型名称不能为空" });
-    }
-
-    try {
-      const assetType = store.updateAssetType(assetTypeId, {
-        name: body.name,
-        description:
-          typeof body.description === "string" ? body.description : undefined,
-      });
-      if (!assetType) {
-        throw new HTTPException(404, { message: "资产类型不存在" });
-      }
-      return c.json({ item: assetType });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("UNIQUE")) {
-        throw new HTTPException(409, { message: "资产类型已存在" });
-      }
-      throw error;
-    }
-  });
-
-  app.get("/api/asset-types/:id/history", (c) => {
-    const assetTypeId = parseId(c.req.param("id"));
-    if (assetTypeId === null) {
-      throw new HTTPException(400, { message: "资产类型 id 必须是正整数" });
-    }
-    return c.json({ items: store.listAssetHistory(assetTypeId) });
-  });
-
-  app.get("/api/records", (c) => {
-    const month = c.req.query("month");
-    if (month !== undefined && !isMonth(month)) {
-      throw new HTTPException(400, { message: "月份格式必须是 YYYY-MM" });
-    }
-    return c.json({ items: store.listRecords(month) });
-  });
-
-  app.post("/api/records", async (c) => {
-    const body = await parseJson<{
-      assetTypeId?: unknown;
-      month?: unknown;
-      value?: unknown;
-      note?: unknown;
-    }>(c);
-
-    const assetTypeId = parseId(body.assetTypeId);
-    const value = Number(body.value);
-    if (assetTypeId === null) {
-      throw new HTTPException(400, { message: "assetTypeId 必须是正整数" });
-    }
-    if (!isMonth(body.month)) {
-      throw new HTTPException(400, { message: "月份格式必须是 YYYY-MM" });
-    }
-    if (!Number.isFinite(value) || value < 0) {
-      throw new HTTPException(400, { message: "资产价值必须是非负数字" });
-    }
-
-    try {
-      const record = store.upsertRecord({
-        assetTypeId,
-        month: body.month,
-        value,
-        note: typeof body.note === "string" ? body.note : undefined,
-      });
-      return c.json({ item: record }, 201);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("FOREIGN KEY")) {
-        throw new HTTPException(404, { message: "资产类型不存在" });
-      }
-      throw error;
-    }
-  });
-
-  app.put("/api/records/:id", async (c) => {
-    const recordId = parseId(c.req.param("id"));
-    const body = await parseJson<{
-      assetTypeId?: unknown;
-      month?: unknown;
-      value?: unknown;
-      note?: unknown;
-    }>(c);
-
-    const assetTypeId = parseId(body.assetTypeId);
-    const value = Number(body.value);
-    if (recordId === null) {
-      throw new HTTPException(400, { message: "记录 id 必须是正整数" });
-    }
-    if (assetTypeId === null) {
-      throw new HTTPException(400, { message: "assetTypeId 必须是正整数" });
-    }
-    if (!isMonth(body.month)) {
-      throw new HTTPException(400, { message: "月份格式必须是 YYYY-MM" });
-    }
-    if (!Number.isFinite(value) || value < 0) {
-      throw new HTTPException(400, { message: "资产价值必须是非负数字" });
-    }
-
-    try {
-      const record = store.updateRecord(recordId, {
-        assetTypeId,
-        month: body.month,
-        value,
-        note: typeof body.note === "string" ? body.note : undefined,
-      });
-      if (!record) {
-        throw new HTTPException(404, { message: "月度记录不存在" });
-      }
-      return c.json({ item: record });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("FOREIGN KEY")) {
-        throw new HTTPException(404, { message: "资产类型不存在" });
-      }
-      if (message.includes("UNIQUE")) {
-        throw new HTTPException(409, { message: "该资产类型和月份已存在记录" });
-      }
-      throw error;
-    }
-  });
-
-  app.delete("/api/records/:id", (c) => {
-    const recordId = parseId(c.req.param("id"));
-    if (recordId === null) {
-      throw new HTTPException(400, { message: "记录 id 必须是正整数" });
-    }
-
-    if (!store.deleteRecord(recordId)) {
-      throw new HTTPException(404, { message: "月度记录不存在" });
-    }
-    return c.json({ ok: true });
-  });
-
-  app.get("/api/summary", (c) => {
-    const month = c.req.query("month");
-    if (month !== undefined && !isMonth(month)) {
-      throw new HTTPException(400, { message: "月份格式必须是 YYYY-MM" });
-    }
-    return c.json(store.getPortfolioSummary(month));
-  });
+  app.route("/api", createApiRoutes(store));
 
   app.onError((error, c) => {
     if (error instanceof HTTPException) {
