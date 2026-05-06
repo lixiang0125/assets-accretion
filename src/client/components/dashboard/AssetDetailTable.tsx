@@ -16,7 +16,7 @@ type AssetDetailTableProps = {
   items: SummaryItem[];
   status: string;
   statusType: "idle" | "error";
-  onDeleteRecord: (item: SummaryItem) => void;
+  onRequestDeleteRecord: (item: SummaryItem) => void;
   onEditRecord: (item: SummaryItem) => void;
   onOpenHistory: (item: SummaryItem) => void;
 };
@@ -27,9 +27,9 @@ export function AssetDetailTable({
   items,
   status,
   statusType,
-  onDeleteRecord,
   onEditRecord,
   onOpenHistory,
+  onRequestDeleteRecord,
 }: AssetDetailTableProps) {
   return (
     <Card aria-label="资产明细" role="region">
@@ -89,7 +89,7 @@ export function AssetDetailTable({
                             type="button"
                             size="sm"
                             variant="destructive"
-                            onClick={() => onDeleteRecord(item)}
+                            onClick={() => onRequestDeleteRecord(item)}
                           >
                             删除
                           </Button>

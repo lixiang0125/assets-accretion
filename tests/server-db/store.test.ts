@@ -172,3 +172,108 @@ test("updating a missing monthly record returns null and leaves data untouched",
   expect(assetStore.listRecords("2026-05")).toHaveLength(1);
   expect(assetStore.listRecords("2026-05")[0]?.value).toBe(5000);
 });
+
+test("records operation logs and restores a deleted monthly snapshot", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({ name: "现金" });
+
+  expect(cash?.createdAt).toBeString();
+  assetStore.upsertRecord({ assetTypeId: cash!.id, month: "2026-04", value: 100 });
+  const mayRecord = assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 150,
+    note: "恢复用快照",
+  });
+
+  expect(mayRecord).not.toBeNull();
+  expect(assetStore.deleteRecord(mayRecord!.id)).toBe(true);
+  expect(assetStore.listRecords("2026-05")).toEqual([]);
+
+  const deleteLog = assetStore.listOperationLogs({
+    action: "record_deleted",
+    limit: 1,
+  })[0];
+  expect(deleteLog).toMatchObject({
+    action: "record_deleted",
+    entityId: mayRecord!.id,
+    reversible: true,
+    restoredAt: null,
+  });
+  expect(deleteLog?.beforePayload).toMatchObject({
+    id: mayRecord!.id,
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 150,
+    note: "恢复用快照",
+  });
+
+  const restoreResult = assetStore.restoreOperationLog(deleteLog!.id);
+
+  expect(restoreResult.ok).toBe(true);
+  if (restoreResult.ok) {
+    expect(restoreResult.item).toMatchObject({
+      id: mayRecord!.id,
+      assetTypeId: cash!.id,
+      month: "2026-05",
+      value: 150,
+      note: "恢复用快照",
+    });
+    expect(restoreResult.log).toMatchObject({
+      action: "record_restored",
+      sourceLogId: deleteLog!.id,
+    });
+  }
+  expect(assetStore.listRecords("2026-05")[0]?.id).toBe(mayRecord!.id);
+  expect(assetStore.getOperationLogById(deleteLog!.id)?.restoredAt).toBeString();
+  expect(assetStore.restoreOperationLog(deleteLog!.id)).toEqual({
+    ok: false,
+    reason: "already_restored",
+  });
+});
+
+test("refuses unsupported and conflicting operation restores", () => {
+  const assetStore = createTempStore();
+  const fund = assetStore.createAssetType({ name: "基金" });
+
+  expect(fund?.createdAt).toBeString();
+  const mayRecord = assetStore.upsertRecord({
+    assetTypeId: fund!.id,
+    month: "2026-05",
+    value: 5000,
+  });
+  const createLog = assetStore.listOperationLogs({
+    action: "record_created",
+    limit: 1,
+  })[0];
+
+  expect(assetStore.restoreOperationLog(999999)).toEqual({
+    ok: false,
+    reason: "not_found",
+  });
+  expect(assetStore.restoreOperationLog(createLog!.id)).toEqual({
+    ok: false,
+    reason: "not_reversible",
+  });
+
+  expect(mayRecord).not.toBeNull();
+  expect(assetStore.deleteRecord(mayRecord!.id)).toBe(true);
+  const deleteLog = assetStore.listOperationLogs({
+    action: "record_deleted",
+    limit: 1,
+  })[0];
+
+  assetStore.upsertRecord({
+    assetTypeId: fund!.id,
+    month: "2026-05",
+    value: 6500,
+  });
+
+  expect(assetStore.restoreOperationLog(deleteLog!.id)).toEqual({
+    ok: false,
+    reason: "conflict",
+  });
+  expect(assetStore.listRecords("2026-05")).toHaveLength(1);
+  expect(assetStore.listRecords("2026-05")[0]?.value).toBe(6500);
+  expect(assetStore.getOperationLogById(deleteLog!.id)?.restoredAt).toBeNull();
+});

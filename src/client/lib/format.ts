@@ -22,6 +22,11 @@ export function currentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+export function formatDateTime(value: string | null | undefined) {
+  if (!value) return "--";
+  return value.replace("T", " ").slice(0, 19);
+}
+
 export function toneClass(value: number | null | undefined) {
   if (value === null || value === undefined || value === 0) return "";
   return value > 0 ? "value-positive" : "value-negative";

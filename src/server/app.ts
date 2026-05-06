@@ -46,6 +46,8 @@ export function createApp(store: AssetStore) {
     })
   );
 
+  app.get("/favicon.ico", () => new Response(null, { status: 204 }));
+
   app.route("/api", createApiRoutes(store));
 
   app.onError((error, c) => {

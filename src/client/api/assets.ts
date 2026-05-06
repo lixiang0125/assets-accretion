@@ -1,4 +1,11 @@
-import type { AssetType, PortfolioSummary, RecordFormState, SummaryItem } from "../types";
+import type {
+  AssetType,
+  OperationLog,
+  OperationLogAction,
+  PortfolioSummary,
+  RecordFormState,
+  SummaryItem,
+} from "../types";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -50,4 +57,25 @@ export async function saveRecord(input: RecordFormState, recordId?: number) {
 
 export async function deleteRecord(recordId: number) {
   return request<{ ok: true }>(`/api/records/${recordId}`, { method: "DELETE" });
+}
+
+export async function fetchOperationLogs(input?: {
+  action?: OperationLogAction;
+  limit?: number;
+}) {
+  const params = new URLSearchParams();
+  if (input?.action) params.set("action", input.action);
+  if (input?.limit) params.set("limit", String(input.limit));
+  const query = params.toString();
+
+  return request<{ items: OperationLog[] }>(
+    `/api/operation-logs${query ? `?${query}` : ""}`
+  );
+}
+
+export async function restoreOperationLog(logId: number) {
+  return request<{ item: SummaryItem; log: OperationLog }>(
+    `/api/operation-logs/${logId}/restore`,
+    { method: "POST" }
+  );
 }

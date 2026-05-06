@@ -37,3 +37,26 @@ export type RecordFormState = {
   value: string;
   note: string;
 };
+
+export type OperationLogAction =
+  | "asset_type_created"
+  | "asset_type_updated"
+  | "record_created"
+  | "record_updated"
+  | "record_deleted"
+  | "record_restored";
+
+export type OperationLog = {
+  id: number;
+  action: OperationLogAction;
+  entityType: string;
+  entityId: number | null;
+  entityLabel: string;
+  summary: string;
+  beforePayload: unknown | null;
+  afterPayload: unknown | null;
+  reversible: boolean;
+  restoredAt: string | null;
+  sourceLogId: number | null;
+  createdAt: string;
+};

@@ -1,14 +1,22 @@
+import { useState } from "react";
 import { AssetDetailTable } from "./components/dashboard/AssetDetailTable";
+import { DeleteRecordDialog } from "./components/dashboard/DeleteRecordDialog";
 import { AssetTypeForm } from "./components/dashboard/AssetTypeForm";
 import { HistoryDrawer } from "./components/dashboard/HistoryDrawer";
 import { MetricsGrid } from "./components/dashboard/MetricsGrid";
 import { RecordForm } from "./components/dashboard/RecordForm";
+import { OperationLogPage } from "./components/operations/OperationLogPage";
+import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { useAssetDashboard } from "./hooks/useAssetDashboard";
+import { cn } from "./lib/utils";
+
+type AppView = "dashboard" | "operation-logs";
 
 export function App() {
   const dashboard = useAssetDashboard();
+  const [activeView, setActiveView] = useState<AppView>("dashboard");
 
   return (
     <>
@@ -29,35 +37,60 @@ export function App() {
           </div>
         </section>
 
-        <MetricsGrid summary={dashboard.summary} />
+        <nav className="view-tabs" aria-label="页面导航">
+          <Button
+            type="button"
+            variant={activeView === "dashboard" ? "default" : "outline"}
+            className={cn(activeView === "dashboard" && "view-tab-active")}
+            onClick={() => setActiveView("dashboard")}
+          >
+            资产统计
+          </Button>
+          <Button
+            type="button"
+            variant={activeView === "operation-logs" ? "default" : "outline"}
+            className={cn(activeView === "operation-logs" && "view-tab-active")}
+            onClick={() => setActiveView("operation-logs")}
+          >
+            操作记录
+          </Button>
+        </nav>
 
-        <section className="forms-grid">
-          <AssetTypeForm
-            description={dashboard.assetTypeDescription}
-            name={dashboard.assetTypeName}
-            onDescriptionChange={dashboard.setAssetTypeDescription}
-            onNameChange={dashboard.setAssetTypeName}
-            onSubmit={dashboard.submitAssetType}
-          />
-          <RecordForm
-            assetTypes={dashboard.assetTypes}
-            editingRecord={dashboard.editingRecord}
-            form={dashboard.recordForm}
-            selectedAssetTypeId={dashboard.selectedAssetTypeId}
-            onCancelEdit={dashboard.resetRecordForm}
-            onFieldChange={dashboard.updateRecordField}
-            onSubmit={dashboard.submitRecord}
-          />
-        </section>
+        {activeView === "dashboard" ? (
+          <>
+            <MetricsGrid summary={dashboard.summary} />
 
-        <AssetDetailTable
-          items={dashboard.summary?.items ?? []}
-          status={dashboard.status}
-          statusType={dashboard.statusType}
-          onDeleteRecord={dashboard.removeRecord}
-          onEditRecord={dashboard.editRecord}
-          onOpenHistory={dashboard.openHistory}
-        />
+            <section className="forms-grid">
+              <AssetTypeForm
+                description={dashboard.assetTypeDescription}
+                name={dashboard.assetTypeName}
+                onDescriptionChange={dashboard.setAssetTypeDescription}
+                onNameChange={dashboard.setAssetTypeName}
+                onSubmit={dashboard.submitAssetType}
+              />
+              <RecordForm
+                assetTypes={dashboard.assetTypes}
+                editingRecord={dashboard.editingRecord}
+                form={dashboard.recordForm}
+                selectedAssetTypeId={dashboard.selectedAssetTypeId}
+                onCancelEdit={dashboard.resetRecordForm}
+                onFieldChange={dashboard.updateRecordField}
+                onSubmit={dashboard.submitRecord}
+              />
+            </section>
+
+            <AssetDetailTable
+              items={dashboard.summary?.items ?? []}
+              status={dashboard.status}
+              statusType={dashboard.statusType}
+              onEditRecord={dashboard.editRecord}
+              onOpenHistory={dashboard.openHistory}
+              onRequestDeleteRecord={dashboard.requestDeleteRecord}
+            />
+          </>
+        ) : (
+          <OperationLogPage onRestored={() => dashboard.refreshDashboard("删除记录已恢复")} />
+        )}
       </main>
 
       <HistoryDrawer
@@ -65,6 +98,13 @@ export function App() {
         history={dashboard.drawerHistory}
         isLoading={dashboard.isHistoryLoading}
         onOpenChange={dashboard.setDrawerOpen}
+      />
+      <DeleteRecordDialog
+        confirmStep={dashboard.deleteConfirmStep}
+        isDeleting={dashboard.isDeletingRecord}
+        record={dashboard.pendingDeleteRecord}
+        onCancel={dashboard.cancelDeleteRecord}
+        onConfirmStep={dashboard.confirmDeleteRecord}
       />
     </>
   );

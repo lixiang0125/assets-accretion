@@ -7,7 +7,8 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 
 - 添加资产类型，例如现金、股票、基金、房产。
 - 每个资产类型只创建一次，按月份持续更新该类型的资产价值。
-- 月度明细支持编辑和删除。
+- 月度明细支持编辑和删除；删除需要二次确认。
+- 操作记录页面可查询每次创建、更新、删除和恢复动作，删除记录支持恢复。
 - 点击资产类型可在抽屉中查看月维度变化和折线趋势。
 - 自动查找同资产类型的上一个记录月份，计算增值金额和增值率。
 - 汇总指定月份的总资产、前期对比值、总增值金额和总增值率。
@@ -53,4 +54,6 @@ SQLite 默认文件位于 `data/assets.sqlite`，已加入 `.gitignore`。
 - `POST /api/records`
 - `PUT /api/records/:id`
 - `DELETE /api/records/:id`
+- `GET /api/operation-logs?action=record_deleted&limit=100`
+- `POST /api/operation-logs/:id/restore`
 - `GET /api/summary?month=YYYY-MM`

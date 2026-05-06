@@ -63,6 +63,20 @@ h1 {
   margin-bottom: 14px;
 }
 
+.view-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.view-tabs .ui-button {
+  min-width: 104px;
+}
+
+.view-tab-active {
+  box-shadow: 0 10px 24px rgba(36, 116, 90, 0.16);
+}
+
 .metrics-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -401,6 +415,188 @@ h1 {
   height: 16px;
 }
 
+.ui-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(28, 36, 32, 0.34);
+}
+
+.ui-dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 70;
+  display: grid;
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  gap: 18px;
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
+  border: 1px solid #dfe5dc;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 64px rgba(24, 45, 36, 0.2);
+  padding: 22px;
+}
+
+.ui-dialog-header {
+  display: grid;
+  gap: 8px;
+  padding-right: 36px;
+}
+
+.ui-dialog-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.ui-dialog-description {
+  margin: 6px 0 0;
+  color: #66716b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ui-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ui-dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dfe5dc;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1c2420;
+  cursor: pointer;
+}
+
+.ui-dialog-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.dialog-title-row {
+  display: flex;
+  gap: 12px;
+}
+
+.danger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #f8e9e6;
+  color: #b44433;
+}
+
+.danger-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.delete-record-summary {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #f0d9d4;
+  border-radius: 8px;
+  background: #fffafa;
+  padding: 14px;
+}
+
+.delete-record-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.delete-record-summary span,
+.danger-copy,
+.section-subtitle {
+  color: #66716b;
+}
+
+.delete-record-summary strong {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.danger-copy {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.section-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.operation-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.operation-filter {
+  width: min(260px, 100%);
+}
+
+.operation-table {
+  min-width: 1040px;
+}
+
+.operation-summary-cell {
+  min-width: 320px;
+  max-width: 460px;
+  white-space: normal;
+}
+
+.operation-summary {
+  margin: 0 0 8px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.operation-payload {
+  color: #66716b;
+  font-size: 13px;
+}
+
+.operation-payload summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.operation-payload pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 8px 0 0;
+  border: 1px solid #dfe5dc;
+  border-radius: 8px;
+  background: #f6f7f3;
+  color: #1c2420;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .chart-panel {
   margin-top: 20px;
   padding: 16px;
@@ -480,7 +676,24 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .view-tabs,
+  .operation-toolbar,
+  .ui-dialog-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .view-tabs .ui-button,
+  .operation-toolbar .ui-button,
+  .operation-filter {
+    width: 100%;
+  }
+
   .ui-sheet-content {
+    padding: 20px;
+  }
+
+  .ui-dialog-content {
     padding: 20px;
   }
 }

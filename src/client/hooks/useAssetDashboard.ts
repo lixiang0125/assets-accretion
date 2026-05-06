@@ -7,7 +7,13 @@ import {
   fetchSummary,
   saveRecord,
 } from "../api/assets";
-import type { AssetType, PortfolioSummary, RecordFormState, StatusType, SummaryItem } from "../types";
+import type {
+  AssetType,
+  PortfolioSummary,
+  RecordFormState,
+  StatusType,
+  SummaryItem,
+} from "../types";
 import { currentMonth } from "../lib/format";
 
 const initialMonth = currentMonth();
@@ -27,6 +33,9 @@ export function useAssetDashboard() {
   const [assetTypeDescription, setAssetTypeDescription] = useState("");
   const [recordForm, setRecordForm] = useState<RecordFormState>(emptyRecordForm);
   const [editingRecord, setEditingRecord] = useState<SummaryItem | null>(null);
+  const [pendingDeleteRecord, setPendingDeleteRecord] = useState<SummaryItem | null>(null);
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
+  const [isDeletingRecord, setIsDeletingRecord] = useState(false);
   const [drawerAsset, setDrawerAsset] = useState<AssetType | null>(null);
   const [drawerHistory, setDrawerHistory] = useState<SummaryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
@@ -76,7 +85,7 @@ export function useAssetDashboard() {
     }
   }
 
-  async function refresh(message: string) {
+  async function refresh(message = "数据已刷新") {
     const [nextAssetTypes] = await Promise.all([loadAssetTypes(), loadSummary()]);
     if (drawerAsset) {
       const nextDrawerAsset =
@@ -156,18 +165,39 @@ export function useAssetDashboard() {
     setStatusType("idle");
   }
 
-  async function removeRecord(item: SummaryItem) {
-    const confirmed = window.confirm(`删除 ${item.assetTypeName} ${item.month} 的月度记录？`);
-    if (!confirmed) return;
+  function requestDeleteRecord(item: SummaryItem) {
+    setPendingDeleteRecord(item);
+    setDeleteConfirmStep(1);
+    setStatus("等待删除确认");
+    setStatusType("idle");
+  }
 
+  function cancelDeleteRecord() {
+    if (isDeletingRecord) return;
+    setPendingDeleteRecord(null);
+    setDeleteConfirmStep(1);
+  }
+
+  async function confirmDeleteRecord() {
+    if (!pendingDeleteRecord) return;
+    if (deleteConfirmStep === 1) {
+      setDeleteConfirmStep(2);
+      return;
+    }
+
+    setIsDeletingRecord(true);
     try {
-      await deleteRecord(item.id);
-      if (editingRecord?.id === item.id) {
+      await deleteRecord(pendingDeleteRecord.id);
+      if (editingRecord?.id === pendingDeleteRecord.id) {
         resetRecordForm();
       }
+      setPendingDeleteRecord(null);
+      setDeleteConfirmStep(1);
       await refresh("月度记录已删除");
     } catch (error) {
       showError(error);
+    } finally {
+      setIsDeletingRecord(false);
     }
   }
 
@@ -199,17 +229,23 @@ export function useAssetDashboard() {
     drawerAsset,
     drawerHistory,
     editingRecord,
+    deleteConfirmStep,
     isHistoryLoading,
+    isDeletingRecord,
     month,
+    pendingDeleteRecord,
     recordForm,
     selectedAssetTypeId,
     status,
     statusType,
     summary,
     changeMonth,
+    cancelDeleteRecord,
+    confirmDeleteRecord,
     editRecord,
     openHistory,
-    removeRecord,
+    refreshDashboard: refresh,
+    requestDeleteRecord,
     resetRecordForm,
     setAssetTypeDescription,
     setAssetTypeName,

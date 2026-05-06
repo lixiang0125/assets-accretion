@@ -7,6 +7,9 @@
 - 添加资产类型，例如现金、股票、基金、房产。
 - 每个资产类型只创建一次，按月份持续更新该类型的资产价值。
 - 编辑或删除已保存的月度明细。
+- 删除月度明细前必须二次确认。
+- 通过操作记录页面查询每次创建、更新、删除和恢复动作。
+- 对删除的月度明细，从操作记录中恢复删除前快照。
 - 点击资产类型，在抽屉中查看月维度变化和折线趋势。
 - 自动对比同一资产类型的上一个记录月份。
 - 查看指定月份的总资产、前期对比值、增值金额和增值率。
@@ -36,6 +39,7 @@ src/
     api/               浏览器端 API 请求封装
     components/
       dashboard/       业务组件：表单、指标卡、明细表、历史抽屉和图表
+      operations/      业务组件：操作记录查询与恢复页面
       ui/              shadcn/ui 风格基础组件
     document.tsx       React 渲染的 HTML document 壳
     hooks/             页面状态和业务动作 hooks
@@ -107,6 +111,30 @@ SQLite 默认文件：`data/assets.sqlite`
 - 删除资产类型时级联删除对应月度记录。
 - 增值对比取同一资产类型中早于当前月份的最近一条记录。
 
+### `operation_logs`
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | INTEGER | 主键 |
+| `action` | TEXT | 操作类型，例如 `record_deleted`、`record_restored` |
+| `entity_type` | TEXT | 操作对象类型 |
+| `entity_id` | INTEGER | 操作对象 id |
+| `entity_label` | TEXT | 页面可读对象名称 |
+| `summary` | TEXT | 操作摘要 |
+| `before_payload` | TEXT | 操作前快照 JSON |
+| `after_payload` | TEXT | 操作后快照 JSON |
+| `reversible` | INTEGER | 是否可恢复 |
+| `restored_at` | TEXT | 删除操作被恢复的时间 |
+| `source_log_id` | INTEGER | 恢复操作对应的原删除日志 |
+| `created_at` | TEXT | 操作发生时间 |
+
+约束：
+
+- 所有资产类型创建/更新、月度记录创建/更新/删除/恢复都要写入操作记录。
+- `record_deleted` 必须保存删除前快照，且标记为可恢复。
+- 恢复删除记录时，如果原资产类型不存在、原记录 id 已存在，或同一资产类型同一月份已存在记录，则拒绝恢复，避免覆盖当前账本。
+- 恢复成功后需要回写原删除日志的 `restored_at`，防止重复恢复。
+
 ## API
 
 | Method | Path | 说明 |
@@ -120,6 +148,8 @@ SQLite 默认文件：`data/assets.sqlite`
 | `POST` | `/api/records` | 新增或更新某资产类型某月份价值 |
 | `PUT` | `/api/records/:id` | 编辑已保存的月度记录 |
 | `DELETE` | `/api/records/:id` | 删除已保存的月度记录 |
+| `GET` | `/api/operation-logs?action=record_deleted&limit=100` | 查询操作记录，`action` 可选，`limit` 范围 1 到 500 |
+| `POST` | `/api/operation-logs/:id/restore` | 恢复可逆的删除操作 |
 | `GET` | `/api/summary?month=YYYY-MM` | 获取指定月份汇总与增值明细 |
 
 ## 关键设计决策
@@ -130,3 +160,4 @@ SQLite 默认文件：`data/assets.sqlite`
 - shadcn/ui 本地化：`src/client/components/ui/` 保存可维护的 shadcn/ui 风格组件源码，业务组件只组合这些基础组件，不直接复制 Radix 细节。
 - 可注入 app：`createApp(store)` 是刻意保留的测试隔离点，测试和冒烟验证应传入临时 SQLite store，避免写入真实本地账本。
 - 动态 bundle：当前由 Hono 在 `/assets/app.js` 请求时调用 `Bun.build` 打包客户端，适合本地开发；未来如需生产部署，可改为固定 build 产物和缓存策略。
+- 删除可恢复：删除记录不是直接不可逆地丢弃上下文，而是通过操作日志保存快照；恢复接口只恢复原始快照，不覆盖后来新建的同月记录。
