@@ -20,7 +20,7 @@
 .portfolio-trend-subtitle,
 .portfolio-trend-current {
   color: var(--color-muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   margin: 6px 0 0;
 }
@@ -75,14 +75,14 @@
 
 .portfolio-trend-value-label {
   fill: var(--color-text);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
 }
 
 .portfolio-trend-y-label,
 .portfolio-trend-month-label {
   fill: var(--color-muted);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
 }
 
