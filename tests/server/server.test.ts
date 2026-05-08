@@ -89,6 +89,9 @@ test("serves separated client stylesheet", async () => {
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(response.headers.get("content-type")).toContain("text/css");
   expect(stylesheet).toContain('@import "./App/App.css"');
+  expect(stylesheet).toContain(
+    '@import "./components/dashboard/PortfolioTrendChart/PortfolioTrendChart.css"'
+  );
 });
 
 test("serves imported component stylesheets from the client tree only", async () => {
@@ -256,6 +259,23 @@ test("summarizes changes against a selected comparison month", async () => {
     changeValue: 110,
     changeRate: 2.75,
   });
+});
+
+test("lists portfolio trend through API", async () => {
+  const cash = await createAssetType("现金");
+  const stock = await createAssetType("股票");
+  await createRecord({ assetTypeId: cash.id, month: "2026-04", value: 40 });
+  await createRecord({ assetTypeId: stock.id, month: "2026-04", value: 60 });
+  await createRecord({ assetTypeId: cash.id, month: "2026-05", value: 120 });
+
+  const response = await app.request("/api/summary/trend");
+  const payload = await response.json();
+
+  expect(response.status).toBe(200);
+  expect(payload.items).toEqual([
+    { month: "2026-04", totalValue: 100 },
+    { month: "2026-05", totalValue: 120 },
+  ]);
 });
 
 test("updates, deletes, and lists asset history through API", async () => {

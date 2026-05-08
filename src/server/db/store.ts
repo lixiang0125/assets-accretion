@@ -38,6 +38,11 @@ export type AssetSummary = {
   hasRecord: boolean;
 };
 
+export type PortfolioTrendPoint = {
+  month: string;
+  totalValue: number;
+};
+
 export type OperationLogAction =
   | "asset_type_created"
   | "asset_type_updated"
@@ -103,6 +108,11 @@ type AssetSummaryRow = {
   updated_at: string | null;
   previous_month: string | null;
   previous_value: number | null;
+};
+
+type PortfolioTrendRow = {
+  month: string;
+  total_value: number;
 };
 
 type OperationLogRow = {
@@ -205,6 +215,13 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       hasRecord: row.id !== null,
     };
   };
+
+  const mapPortfolioTrendPoint = (
+    row: PortfolioTrendRow
+  ): PortfolioTrendPoint => ({
+    month: row.month,
+    totalValue: row.total_value,
+  });
 
   const parsePayload = (payload: string | null) =>
     payload === null ? null : (JSON.parse(payload) as unknown);
@@ -894,6 +911,23 @@ export function createAssetStore(filename = "data/assets.sqlite") {
           totalPreviousValue === 0 ? null : totalChangeValue / totalPreviousValue,
         items: rows,
       };
+    },
+
+    listPortfolioTrend() {
+      const rows = db
+        .query<PortfolioTrendRow, []>(
+          `
+          SELECT
+            month,
+            SUM(value) AS total_value
+          FROM asset_records
+          GROUP BY month
+          ORDER BY month ASC
+        `
+        )
+        .all();
+
+      return rows.map(mapPortfolioTrendPoint);
     },
 
     close() {

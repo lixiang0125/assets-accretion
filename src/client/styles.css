@@ -6,6 +6,7 @@
 @import "./components/dashboard/HistoryDrawer/HistoryDrawer.css";
 @import "./components/dashboard/MetricCard/MetricCard.css";
 @import "./components/dashboard/MetricsGrid/MetricsGrid.css";
+@import "./components/dashboard/PortfolioTrendChart/PortfolioTrendChart.css";
 @import "./components/dashboard/RecordDrawer/RecordDrawer.css";
 @import "./components/operations/OperationLogPage/OperationLogPage.css";
 @import "./components/ui/Button/Button.css";

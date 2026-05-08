@@ -5,6 +5,7 @@ import { DeleteRecordDialog } from "../components/dashboard/DeleteRecordDialog";
 import { AssetTypeForm } from "../components/dashboard/AssetTypeForm";
 import { HistoryDrawer } from "../components/dashboard/HistoryDrawer";
 import { MetricsGrid } from "../components/dashboard/MetricsGrid";
+import { PortfolioTrendChart } from "../components/dashboard/PortfolioTrendChart";
 import { RecordDrawer } from "../components/dashboard/RecordDrawer";
 import { OperationLogPage } from "../components/operations/OperationLogPage";
 import { Button } from "../components/ui/Button";
@@ -106,6 +107,10 @@ export function App() {
         {activeView === "dashboard" ? (
           <>
             <MetricsGrid compareMonth={dashboard.compareMonth} summary={dashboard.summary} />
+            <PortfolioTrendChart
+              items={dashboard.portfolioTrend}
+              selectedMonth={dashboard.month}
+            />
             <AssetDetailTable
               items={dashboard.summary?.items ?? []}
               status={dashboard.status}

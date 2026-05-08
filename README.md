@@ -13,6 +13,7 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 - 月度明细支持编辑和删除；删除需要二次确认。
 - 操作记录页面可查询每次创建、更新、删除和恢复动作，删除记录支持恢复。
 - 点击资产类型可在抽屉中查看月维度变化和折线趋势。
+- 在月度明细上方查看总资产按月汇总的折线趋势。
 - 自动查找同资产类型的上一个记录月份，计算增值金额和增值率。
 - 支持选择任意对比月份，增值金额和增值率会明确标记对比时间点。
 - 汇总指定月份的总资产、前期对比值、总增值金额和总增值率。
@@ -91,3 +92,4 @@ cp /some/path/my-assets.sqlite* /你的备份目录/
 - `GET /api/operation-logs?action=record_deleted&limit=100`
 - `POST /api/operation-logs/:id/restore`
 - `GET /api/summary?month=YYYY-MM`
+- `GET /api/summary/trend`

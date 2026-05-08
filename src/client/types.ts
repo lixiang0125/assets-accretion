@@ -31,6 +31,11 @@ export type PortfolioSummary = {
   items: SummaryItem[];
 };
 
+export type PortfolioTrendPoint = {
+  month: string;
+  totalValue: number;
+};
+
 export type StatusType = "idle" | "error";
 
 export type RecordFormState = {

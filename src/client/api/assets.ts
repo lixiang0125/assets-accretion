@@ -3,6 +3,7 @@ import type {
   OperationLog,
   OperationLogAction,
   PortfolioSummary,
+  PortfolioTrendPoint,
   RecordFormState,
   SummaryItem,
 } from "../types";
@@ -37,6 +38,10 @@ export async function fetchSummary(month: string, compareMonth?: string) {
   const params = new URLSearchParams({ month });
   if (compareMonth) params.set("compareMonth", compareMonth);
   return request<PortfolioSummary>(`/api/summary?${params.toString()}`);
+}
+
+export async function fetchPortfolioTrend() {
+  return request<{ items: PortfolioTrendPoint[] }>("/api/summary/trend");
 }
 
 export async function fetchAssetHistory(assetTypeId: number) {

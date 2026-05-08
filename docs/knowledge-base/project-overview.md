@@ -11,6 +11,7 @@
 - 删除月度明细前必须二次确认。
 - 通过操作记录页面查询每次创建、更新、删除和恢复动作。
 - 对删除的月度明细，从操作记录中恢复删除前快照。
+- 在月度明细上方查看总资产按月汇总的折线趋势。
 - 点击资产类型，在抽屉中查看月维度变化和折线趋势。
 - 默认对比同一资产类型的上一个记录月份，也支持选择任意对比月份。
 - 查看指定月份的总资产、前期对比值、增值金额和增值率。
@@ -159,6 +160,7 @@ SQLite 默认文件：`data/assets.sqlite`
 | `GET` | `/api/operation-logs?action=record_deleted&limit=100` | 查询操作记录，`action` 可选，`limit` 范围 1 到 500 |
 | `POST` | `/api/operation-logs/:id/restore` | 恢复可逆的删除操作 |
 | `GET` | `/api/summary?month=YYYY-MM&compareMonth=YYYY-MM` | 获取指定月份汇总与增值明细，`compareMonth` 可选 |
+| `GET` | `/api/summary/trend` | 获取各月份总资产汇总趋势 |
 
 ## 关键设计决策
 

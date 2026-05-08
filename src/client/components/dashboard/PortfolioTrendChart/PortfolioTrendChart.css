@@ -1,0 +1,98 @@
+.portfolio-trend-card {
+  margin-bottom: 14px;
+}
+
+.portfolio-trend-header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.portfolio-trend-subtitle,
+.portfolio-trend-current {
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 6px 0 0;
+}
+
+.portfolio-trend-current {
+  margin-top: 2px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.portfolio-trend-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.portfolio-trend-axis {
+  stroke: var(--color-border);
+  stroke-width: 1.4px;
+}
+
+.portfolio-trend-grid-line {
+  stroke: var(--color-border);
+  stroke-dasharray: 4 8;
+  stroke-width: 1px;
+}
+
+.portfolio-trend-area {
+  fill: var(--color-brand-soft);
+  opacity: 0.8;
+}
+
+.portfolio-trend-line {
+  fill: none;
+  stroke: var(--color-brand-strong);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4px;
+}
+
+.portfolio-trend-point {
+  fill: var(--color-surface);
+  stroke: var(--color-brand-strong);
+  stroke-width: 3px;
+}
+
+.portfolio-trend-point.is-selected {
+  fill: var(--color-brand);
+  filter: drop-shadow(0 6px 10px var(--color-brand-shadow));
+}
+
+.portfolio-trend-value-label {
+  fill: var(--color-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.portfolio-trend-y-label,
+.portfolio-trend-month-label {
+  fill: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.portfolio-trend-empty {
+  color: var(--color-muted);
+  font-weight: 700;
+  padding: 48px 0;
+  text-align: center;
+}
+
+@media (max-width: 820px) {
+  .portfolio-trend-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .portfolio-trend-current {
+    text-align: left;
+    white-space: normal;
+  }
+}

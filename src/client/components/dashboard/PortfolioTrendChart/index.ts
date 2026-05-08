@@ -1,0 +1,1 @@
+export { PortfolioTrendChart } from "./PortfolioTrendChart";

@@ -225,6 +225,23 @@ test("monthly summary can compare against any selected month", () => {
   });
 });
 
+test("lists portfolio trend by month", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({ name: "现金" });
+  const stock = assetStore.createAssetType({ name: "股票" });
+
+  expect(cash?.createdAt).toBeString();
+  expect(stock?.createdAt).toBeString();
+  assetStore.upsertRecord({ assetTypeId: cash!.id, month: "2026-04", value: 40 });
+  assetStore.upsertRecord({ assetTypeId: stock!.id, month: "2026-04", value: 60 });
+  assetStore.upsertRecord({ assetTypeId: cash!.id, month: "2026-05", value: 120 });
+
+  expect(assetStore.listPortfolioTrend()).toEqual([
+    { month: "2026-04", totalValue: 100 },
+    { month: "2026-05", totalValue: 120 },
+  ]);
+});
+
 test("updates and deletes monthly records without recreating asset types", () => {
   const assetStore = createTempStore();
   const cash = assetStore.createAssetType({ name: "现金" });

@@ -4,12 +4,14 @@ import {
   deleteRecord,
   fetchAssetHistory,
   fetchAssetTypes,
+  fetchPortfolioTrend,
   fetchSummary,
   saveRecord,
 } from "../api/assets";
 import type {
   AssetType,
   PortfolioSummary,
+  PortfolioTrendPoint,
   RecordFormState,
   StatusType,
   SummaryItem,
@@ -31,6 +33,7 @@ export function useAssetDashboard() {
   const [compareMonth, setCompareMonth] = useState(initialCompareMonth);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+  const [portfolioTrend, setPortfolioTrend] = useState<PortfolioTrendPoint[]>([]);
   const [assetTypeName, setAssetTypeName] = useState("");
   const [assetTypeDescription, setAssetTypeDescription] = useState("");
   const [recordForm, setRecordForm] = useState<RecordFormState>(emptyRecordForm);
@@ -75,6 +78,12 @@ export function useAssetDashboard() {
     return data;
   }
 
+  async function loadPortfolioTrend() {
+    const data = await fetchPortfolioTrend();
+    setPortfolioTrend(data.items);
+    return data.items;
+  }
+
   async function loadAssetHistory(assetType: AssetType) {
     setDrawerAsset(assetType);
     setIsHistoryLoading(true);
@@ -92,6 +101,7 @@ export function useAssetDashboard() {
     const [nextAssetTypes] = await Promise.all([
       loadAssetTypes(),
       loadSummary(month, compareMonth),
+      loadPortfolioTrend(),
     ]);
     if (drawerAsset) {
       const nextDrawerAsset =
@@ -114,7 +124,7 @@ export function useAssetDashboard() {
   }
 
   useEffect(() => {
-    Promise.all([loadAssetTypes(), loadSummary()]).catch(showError);
+    Promise.all([loadAssetTypes(), loadSummary(), loadPortfolioTrend()]).catch(showError);
   }, []);
 
   async function submitAssetType(event: FormEvent<HTMLFormElement>) {
@@ -296,6 +306,7 @@ export function useAssetDashboard() {
     isDeletingRecord,
     month,
     pendingDeleteRecord,
+    portfolioTrend,
     recordForm,
     selectedAssetTypeId,
     status,
