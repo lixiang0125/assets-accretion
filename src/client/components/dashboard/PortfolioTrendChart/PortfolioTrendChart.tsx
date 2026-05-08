@@ -32,8 +32,8 @@ export function PortfolioTrendChart({
   selectedMonth,
 }: PortfolioTrendChartProps) {
   const width = 760;
-  const height = 260;
-  const padding = { top: 34, right: 38, bottom: 44, left: 72 };
+  const height = 182;
+  const padding = { top: 24, right: 38, bottom: 34, left: 72 };
   const sortedItems = [...items].sort((left, right) =>
     left.month.localeCompare(right.month)
   );

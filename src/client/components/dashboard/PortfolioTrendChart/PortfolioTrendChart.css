@@ -2,11 +2,19 @@
   margin-bottom: 14px;
 }
 
+.portfolio-trend-card .ui-card-content {
+  padding: 12px 18px 14px;
+}
+
 .portfolio-trend-header {
   align-items: flex-start;
   display: flex;
   justify-content: space-between;
   gap: 16px;
+}
+
+.ui-card-header.portfolio-trend-header {
+  padding-top: 14px;
 }
 
 .portfolio-trend-subtitle,
@@ -81,7 +89,7 @@
 .portfolio-trend-empty {
   color: var(--color-muted);
   font-weight: 700;
-  padding: 48px 0;
+  padding: 28px 0;
   text-align: center;
 }
 
