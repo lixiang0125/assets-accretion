@@ -65,7 +65,7 @@
 .portfolio-trend-point {
   fill: var(--color-surface);
   stroke: var(--color-brand-strong);
-  stroke-width: 3px;
+  stroke-width: 2px;
 }
 
 .portfolio-trend-point.is-selected {

@@ -153,7 +153,7 @@ export function PortfolioTrendChart({
                 className={isSelected ? "portfolio-trend-point is-selected" : "portfolio-trend-point"}
                 cx={point.x}
                 cy={point.y}
-                r={isSelected ? 6 : 4}
+                r={isSelected ? 4 : 3}
               />
             );
           })}
