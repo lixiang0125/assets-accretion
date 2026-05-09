@@ -1,5 +1,10 @@
 import type { AssetType, SummaryItem } from "../../../types";
-import { formatCurrency, formatPercent, toneClass } from "../../../lib/format";
+import {
+  formatCurrency,
+  formatDateTime,
+  formatPercent,
+  toneClass,
+} from "../../../lib/format";
 import { Card } from "../../ui/Card";
 import {
   Sheet,
@@ -47,7 +52,7 @@ export function HistoryDrawer({ asset, history, isLoading, onOpenChange }: Histo
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {["月份", "价值", "增值金额", "增值率"].map((heading) => (
+                    {["月份", "价值", "增值金额", "增值率", "最后更新"].map((heading) => (
                       <TableHead key={heading}>{heading}</TableHead>
                     ))}
                   </TableRow>
@@ -55,7 +60,7 @@ export function HistoryDrawer({ asset, history, isLoading, onOpenChange }: Histo
                 <TableBody>
                   {history.length === 0 ? (
                     <TableRow>
-                      <TableCell className="empty-cell" colSpan={4}>
+                      <TableCell className="empty-cell" colSpan={5}>
                         暂无月度记录
                       </TableCell>
                     </TableRow>
@@ -69,6 +74,9 @@ export function HistoryDrawer({ asset, history, isLoading, onOpenChange }: Histo
                         </TableCell>
                         <TableCell className={toneClass(item.changeRate)}>
                           {formatPercent(item.changeRate)}
+                        </TableCell>
+                        <TableCell className="history-updated-at">
+                          {formatDateTime(item.updatedAt)}
                         </TableCell>
                       </TableRow>
                     ))

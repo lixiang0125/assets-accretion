@@ -14,5 +14,10 @@
 }
 
 .drawer-table .ui-table {
-  min-width: 480px;
+  min-width: 680px;
+}
+
+.history-updated-at {
+  color: var(--color-muted);
+  font-size: 13px;
 }

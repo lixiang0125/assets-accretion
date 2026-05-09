@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import {
   currentMonth,
   formatCurrency,
+  formatDateTime,
   nextMonth,
   previousMonth,
   shiftMonth,
@@ -41,6 +42,12 @@ test("calculates next month across year boundaries", () => {
 test("keeps invalid month values unchanged when shifting", () => {
   expect(shiftMonth("invalid", 1)).toBe("invalid");
   expect(shiftMonth("2026-aa", -1)).toBe("2026-aa");
+});
+
+test("formats database timestamps for display", () => {
+  expect(formatDateTime("2026-05-09T21:30:15.123Z")).toBe("2026-05-09 21:30:15");
+  expect(formatDateTime("2026-05-09 21:30:15")).toBe("2026-05-09 21:30:15");
+  expect(formatDateTime(null)).toBe("--");
 });
 
 test("maps profit tone classes for positive and negative values", () => {
