@@ -1,0 +1,51 @@
+.delete-asset-type-title-row {
+  display: flex;
+  gap: 12px;
+}
+
+.delete-asset-type-danger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.delete-asset-type-danger-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.delete-asset-type-summary {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--color-danger-border);
+  border-radius: 8px;
+  background: var(--color-danger-bg);
+  padding: 14px;
+}
+
+.delete-asset-type-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.delete-asset-type-summary span,
+.delete-asset-type-danger-copy {
+  color: var(--color-muted);
+}
+
+.delete-asset-type-summary strong {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.delete-asset-type-danger-copy {
+  margin: 0;
+  line-height: 1.6;
+}

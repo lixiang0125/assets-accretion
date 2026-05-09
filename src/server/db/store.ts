@@ -46,6 +46,7 @@ export type PortfolioTrendPoint = {
 export type OperationLogAction =
   | "asset_type_created"
   | "asset_type_updated"
+  | "asset_type_deleted"
   | "record_created"
   | "record_updated"
   | "record_deleted"
@@ -95,6 +96,10 @@ type AssetRecordRow = {
   note: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type AssetTypeDeleteSnapshot = AssetType & {
+  records: AssetRecord[];
 };
 
 type AssetSummaryRow = {
@@ -424,6 +429,60 @@ export function createAssetStore(filename = "data/assets.sqlite") {
         });
       }
       return assetType;
+    },
+
+    deleteAssetType(assetTypeId: number) {
+      const beforeRow = db
+        .query<AssetTypeRow, [number]>(
+          "SELECT id, name, description, created_at FROM asset_types WHERE id = ?"
+        )
+        .get(assetTypeId);
+      const before = beforeRow ? mapAssetType(beforeRow) : null;
+      if (!before) {
+        return false;
+      }
+
+      const recordRows = db
+        .query<AssetRecordRow, [number]>(
+          `
+          SELECT
+            r.id,
+            r.asset_type_id,
+            t.name AS asset_type_name,
+            r.month,
+            r.value,
+            r.note,
+            r.created_at,
+            r.updated_at
+          FROM asset_records r
+          JOIN asset_types t ON t.id = r.asset_type_id
+          WHERE r.asset_type_id = ?
+          ORDER BY r.month
+        `
+        )
+        .all(assetTypeId);
+      const snapshot: AssetTypeDeleteSnapshot = {
+        ...before,
+        records: recordRows.map(mapRecord),
+      };
+
+      return db.transaction(() => {
+        const result = db
+          .query<never, [number]>("DELETE FROM asset_types WHERE id = ?")
+          .run(assetTypeId);
+        if (result.changes > 0) {
+          insertOperationLog({
+            action: "asset_type_deleted",
+            entityType: "asset_type",
+            entityId: before.id,
+            entityLabel: before.name,
+            summary: `删除资产类型「${before.name}」及 ${snapshot.records.length} 条月度记录`,
+            beforePayload: snapshot,
+            reversible: false,
+          });
+        }
+        return result.changes > 0;
+      })();
     },
 
     upsertRecord(input: {

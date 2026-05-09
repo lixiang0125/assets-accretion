@@ -4,6 +4,7 @@ import { Button } from "../../ui/Button";
 
 type AssetTypeFormProps = {
   description: string;
+  submitLabel?: string;
   name: string;
   onDescriptionChange: (value: string) => void;
   onNameChange: (value: string) => void;
@@ -12,6 +13,7 @@ type AssetTypeFormProps = {
 
 export function AssetTypeForm({
   description,
+  submitLabel = "添加类型",
   name,
   onDescriptionChange,
   onNameChange,
@@ -40,7 +42,7 @@ export function AssetTypeForm({
           onChange={(event) => onDescriptionChange(event.target.value)}
         />
       </div>
-      <Button type="submit">添加类型</Button>
+      <Button type="submit">{submitLabel}</Button>
     </form>
   );
 }

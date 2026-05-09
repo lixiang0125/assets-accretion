@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   createAssetType,
+  deleteAssetType,
   deleteRecord,
   fetchAssetHistory,
   fetchAssetTypes,
   fetchPortfolioTrend,
   fetchSummary,
   saveRecord,
+  updateAssetType,
 } from "../api/assets";
 import type {
   AssetType,
@@ -45,6 +47,12 @@ export function useAssetDashboard() {
   const [drawerAsset, setDrawerAsset] = useState<AssetType | null>(null);
   const [drawerHistory, setDrawerHistory] = useState<SummaryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isEditingDrawerAsset, setIsEditingDrawerAsset] = useState(false);
+  const [drawerAssetName, setDrawerAssetName] = useState("");
+  const [drawerAssetDescription, setDrawerAssetDescription] = useState("");
+  const [pendingDeleteAssetType, setPendingDeleteAssetType] = useState<AssetType | null>(null);
+  const [deleteAssetTypeConfirmStep, setDeleteAssetTypeConfirmStep] = useState<1 | 2>(1);
+  const [isDeletingAssetType, setIsDeletingAssetType] = useState(false);
   const [status, setStatus] = useState("准备就绪");
   const [statusType, setStatusType] = useState<StatusType>("idle");
 
@@ -86,6 +94,8 @@ export function useAssetDashboard() {
 
   async function loadAssetHistory(assetType: AssetType) {
     setDrawerAsset(assetType);
+    setDrawerAssetName(assetType.name);
+    setDrawerAssetDescription(assetType.description ?? "");
     setIsHistoryLoading(true);
     try {
       const data = await fetchAssetHistory(assetType.id);
@@ -105,8 +115,14 @@ export function useAssetDashboard() {
     ]);
     if (drawerAsset) {
       const nextDrawerAsset =
-        nextAssetTypes.find((assetType) => assetType.id === drawerAsset.id) ?? drawerAsset;
-      await loadAssetHistory(nextDrawerAsset);
+        nextAssetTypes.find((assetType) => assetType.id === drawerAsset.id) ?? null;
+      if (nextDrawerAsset) {
+        await loadAssetHistory(nextDrawerAsset);
+      } else {
+        setDrawerAsset(null);
+        setDrawerHistory([]);
+        setIsEditingDrawerAsset(false);
+      }
     }
     setStatus(message);
     setStatusType("idle");
@@ -137,6 +153,26 @@ export function useAssetDashboard() {
       setAssetTypeName("");
       setAssetTypeDescription("");
       await refresh("资产类型已添加");
+      return true;
+    } catch (error) {
+      showError(error);
+      return false;
+    }
+  }
+
+  async function submitDrawerAssetType(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!drawerAsset) return false;
+    try {
+      const data = await updateAssetType(drawerAsset.id, {
+        name: drawerAssetName,
+        description: drawerAssetDescription,
+      });
+      setDrawerAsset(data.item);
+      setDrawerAssetName(data.item.name);
+      setDrawerAssetDescription(data.item.description ?? "");
+      setIsEditingDrawerAsset(false);
+      await refresh("资产类型信息已更新");
       return true;
     } catch (error) {
       showError(error);
@@ -289,6 +325,72 @@ export function useAssetDashboard() {
   function setDrawerOpen(open: boolean) {
     if (!open) {
       setDrawerAsset(null);
+      setDrawerHistory([]);
+      setIsEditingDrawerAsset(false);
+    }
+  }
+
+  function startEditDrawerAsset() {
+    if (!drawerAsset) return;
+    setDrawerAssetName(drawerAsset.name);
+    setDrawerAssetDescription(drawerAsset.description ?? "");
+    setIsEditingDrawerAsset(true);
+    setStatus("正在编辑资产类型信息");
+    setStatusType("idle");
+  }
+
+  function cancelEditDrawerAsset() {
+    if (!drawerAsset) return;
+    setDrawerAssetName(drawerAsset.name);
+    setDrawerAssetDescription(drawerAsset.description ?? "");
+    setIsEditingDrawerAsset(false);
+  }
+
+  function requestDeleteAssetType() {
+    if (!drawerAsset) return;
+    setPendingDeleteAssetType(drawerAsset);
+    setDeleteAssetTypeConfirmStep(1);
+    setStatus("等待删除资产类型确认");
+    setStatusType("idle");
+  }
+
+  function cancelDeleteAssetType() {
+    if (isDeletingAssetType) return;
+    setPendingDeleteAssetType(null);
+    setDeleteAssetTypeConfirmStep(1);
+  }
+
+  async function confirmDeleteAssetType() {
+    if (!pendingDeleteAssetType) return;
+    if (deleteAssetTypeConfirmStep === 1) {
+      setDeleteAssetTypeConfirmStep(2);
+      return;
+    }
+
+    setIsDeletingAssetType(true);
+    try {
+      await deleteAssetType(pendingDeleteAssetType.id);
+      if (editingRecord?.assetTypeId === pendingDeleteAssetType.id) {
+        setEditingRecord(null);
+        setIsRecordDrawerOpen(false);
+      }
+      setRecordForm((current) => ({
+        ...current,
+        assetTypeId:
+          current.assetTypeId === pendingDeleteAssetType.id.toString()
+            ? ""
+            : current.assetTypeId,
+      }));
+      setPendingDeleteAssetType(null);
+      setDeleteAssetTypeConfirmStep(1);
+      setDrawerAsset(null);
+      setDrawerHistory([]);
+      setIsEditingDrawerAsset(false);
+      await refresh("资产类型已删除");
+    } catch (error) {
+      showError(error);
+    } finally {
+      setIsDeletingAssetType(false);
     }
   }
 
@@ -297,11 +399,17 @@ export function useAssetDashboard() {
     assetTypeName,
     assetTypes,
     compareMonth,
+    deleteAssetTypeConfirmStep,
     drawerAsset,
+    drawerAssetDescription,
     drawerHistory,
+    drawerAssetName,
     editingRecord,
     deleteConfirmStep,
+    pendingDeleteAssetType,
     isHistoryLoading,
+    isDeletingAssetType,
+    isEditingDrawerAsset,
     isRecordDrawerOpen,
     isDeletingRecord,
     month,
@@ -315,7 +423,10 @@ export function useAssetDashboard() {
     changeMonth,
     changeCompareMonth,
     changeRecordDrawerOpen,
+    cancelDeleteAssetType,
+    cancelEditDrawerAsset,
     cancelDeleteRecord,
+    confirmDeleteAssetType,
     confirmDeleteRecord,
     editRecord,
     goToNextMonth,
@@ -323,13 +434,18 @@ export function useAssetDashboard() {
     openHistory,
     refreshDashboard: refresh,
     recordAssetType,
+    requestDeleteAssetType,
     requestDeleteRecord,
     resetRecordForm,
     setAssetTypeDescription,
     setAssetTypeName,
+    setDrawerAssetDescription,
+    setDrawerAssetName,
     setDrawerOpen,
     submitAssetType,
+    submitDrawerAssetType,
     submitRecord,
+    startEditDrawerAsset,
     updateRecordField,
   };
 }

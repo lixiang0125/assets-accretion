@@ -34,6 +34,22 @@ export async function createAssetType(input: {
   });
 }
 
+export async function updateAssetType(
+  assetTypeId: number,
+  input: { name: string; description: string }
+) {
+  return request<{ item: AssetType }>(`/api/asset-types/${assetTypeId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteAssetType(assetTypeId: number) {
+  return request<{ ok: true }>(`/api/asset-types/${assetTypeId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function fetchSummary(month: string, compareMonth?: string) {
   const params = new URLSearchParams({ month });
   if (compareMonth) params.set("compareMonth", compareMonth);

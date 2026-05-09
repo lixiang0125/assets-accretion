@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AssetDetailTable } from "../components/dashboard/AssetDetailTable";
+import { DeleteAssetTypeDialog } from "../components/dashboard/DeleteAssetTypeDialog";
 import { DeleteRecordDialog } from "../components/dashboard/DeleteRecordDialog";
 import { AssetTypeForm } from "../components/dashboard/AssetTypeForm";
 import { HistoryDrawer } from "../components/dashboard/HistoryDrawer";
@@ -128,8 +129,17 @@ export function App() {
 
       <HistoryDrawer
         asset={dashboard.drawerAsset}
+        assetDescription={dashboard.drawerAssetDescription}
+        assetName={dashboard.drawerAssetName}
         history={dashboard.drawerHistory}
+        isEditingAsset={dashboard.isEditingDrawerAsset}
         isLoading={dashboard.isHistoryLoading}
+        onAssetDescriptionChange={dashboard.setDrawerAssetDescription}
+        onAssetNameChange={dashboard.setDrawerAssetName}
+        onCancelEditAsset={dashboard.cancelEditDrawerAsset}
+        onRequestDeleteAsset={dashboard.requestDeleteAssetType}
+        onStartEditAsset={dashboard.startEditDrawerAsset}
+        onSubmitAsset={dashboard.submitDrawerAssetType}
         onOpenChange={dashboard.setDrawerOpen}
       />
       <RecordDrawer
@@ -150,6 +160,14 @@ export function App() {
         onCancel={dashboard.cancelDeleteRecord}
         onConfirmStep={dashboard.confirmDeleteRecord}
       />
+      <DeleteAssetTypeDialog
+        asset={dashboard.pendingDeleteAssetType}
+        confirmStep={dashboard.deleteAssetTypeConfirmStep}
+        isDeleting={dashboard.isDeletingAssetType}
+        recordCount={dashboard.drawerHistory.length}
+        onCancel={dashboard.cancelDeleteAssetType}
+        onConfirmStep={dashboard.confirmDeleteAssetType}
+      />
       <Dialog open={isAssetTypeDialogOpen} onOpenChange={setIsAssetTypeDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -161,6 +179,7 @@ export function App() {
           <AssetTypeForm
             description={dashboard.assetTypeDescription}
             name={dashboard.assetTypeName}
+            submitLabel="添加类型"
             onDescriptionChange={dashboard.setAssetTypeDescription}
             onNameChange={dashboard.setAssetTypeName}
             onSubmit={async (event) => {

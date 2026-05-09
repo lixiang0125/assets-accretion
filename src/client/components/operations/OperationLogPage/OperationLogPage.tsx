@@ -28,6 +28,7 @@ type OperationLogPageProps = {
 const actionLabels: Record<OperationLogAction, string> = {
   asset_type_created: "创建资产类型",
   asset_type_updated: "更新资产类型",
+  asset_type_deleted: "删除资产类型",
   record_created: "创建月度记录",
   record_updated: "更新月度记录",
   record_deleted: "删除月度记录",
@@ -38,6 +39,7 @@ const filters: Array<{ label: string; value: OperationLogFilter }> = [
   { label: "全部操作", value: "all" },
   { label: "创建资产类型", value: "asset_type_created" },
   { label: "更新资产类型", value: "asset_type_updated" },
+  { label: "删除资产类型", value: "asset_type_deleted" },
   { label: "创建月度记录", value: "record_created" },
   { label: "更新月度记录", value: "record_updated" },
   { label: "删除月度记录", value: "record_deleted" },

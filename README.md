@@ -8,6 +8,7 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 ## 功能
 
 - 添加资产类型，例如现金、股票、基金、房产。
+- 点击资产类型可查看并修改当前资产类型信息，也可二次确认后删除该资产类型。
 - 每个资产类型只创建一次，按月份持续更新该类型的资产价值。
 - 每个月的明细都会显示所有资产类型，未填写当月价值的类型显示为待记录。
 - 月度明细支持编辑和删除；删除需要二次确认。
@@ -84,6 +85,7 @@ cp /some/path/my-assets.sqlite* /你的备份目录/
 - `GET /api/asset-types`
 - `POST /api/asset-types`
 - `PUT /api/asset-types/:id`
+- `DELETE /api/asset-types/:id`
 - `GET /api/asset-types/:id/history`
 - `GET /api/records?month=YYYY-MM`
 - `POST /api/records`

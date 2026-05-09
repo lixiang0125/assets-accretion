@@ -280,6 +280,66 @@ test("updates and deletes monthly records without recreating asset types", () =>
   ]);
 });
 
+test("deletes asset types with records and writes an audit snapshot", () => {
+  const assetStore = createTempStore();
+  const cash = assetStore.createAssetType({
+    name: "现金",
+    description: "备用金",
+  });
+  const stock = assetStore.createAssetType({ name: "股票" });
+
+  expect(cash?.createdAt).toBeString();
+  expect(stock?.createdAt).toBeString();
+  const april = assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-04",
+    value: 100,
+    note: "四月",
+  });
+  const may = assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 150,
+    note: "五月",
+  });
+  assetStore.upsertRecord({
+    assetTypeId: stock!.id,
+    month: "2026-05",
+    value: 300,
+  });
+
+  expect(april).not.toBeNull();
+  expect(may).not.toBeNull();
+  expect(assetStore.deleteAssetType(cash!.id)).toBe(true);
+  expect(assetStore.deleteAssetType(cash!.id)).toBe(false);
+
+  expect(assetStore.listAssetTypes().map((item) => item.name)).toEqual(["股票"]);
+  expect(assetStore.listAssetHistory(cash!.id)).toEqual([]);
+  expect(assetStore.listRecords("2026-05")).toHaveLength(1);
+  expect(assetStore.listRecords("2026-05")[0]?.assetTypeId).toBe(stock!.id);
+
+  const deleteLog = assetStore.listOperationLogs({
+    action: "asset_type_deleted",
+    limit: 1,
+  })[0];
+  expect(deleteLog).toMatchObject({
+    action: "asset_type_deleted",
+    entityId: cash!.id,
+    entityLabel: "现金",
+    reversible: false,
+    restoredAt: null,
+  });
+  expect(deleteLog?.beforePayload).toMatchObject({
+    id: cash!.id,
+    name: "现金",
+    description: "备用金",
+    records: [
+      { id: april!.id, assetTypeId: cash!.id, month: "2026-04", value: 100 },
+      { id: may!.id, assetTypeId: cash!.id, month: "2026-05", value: 150 },
+    ],
+  });
+});
+
 test("history comparison falls back after deleting an intermediate month", () => {
   const assetStore = createTempStore();
   const cash = assetStore.createAssetType({ name: "现金" });

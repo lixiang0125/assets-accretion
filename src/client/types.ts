@@ -48,6 +48,7 @@ export type RecordFormState = {
 export type OperationLogAction =
   | "asset_type_created"
   | "asset_type_updated"
+  | "asset_type_deleted"
   | "record_created"
   | "record_updated"
   | "record_deleted"

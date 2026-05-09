@@ -90,6 +90,9 @@ test("serves separated client stylesheet", async () => {
   expect(response.headers.get("content-type")).toContain("text/css");
   expect(stylesheet).toContain('@import "./App/App.css"');
   expect(stylesheet).toContain(
+    '@import "./components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css"'
+  );
+  expect(stylesheet).toContain(
     '@import "./components/dashboard/PortfolioTrendChart/PortfolioTrendChart.css"'
   );
 });
@@ -103,6 +106,9 @@ test("serves imported component stylesheets from the client tree only", async ()
   const drawerStylesResponse = await app.request(
     "/assets/components/dashboard/RecordDrawer/RecordDrawer.css"
   );
+  const deleteAssetTypeStylesResponse = await app.request(
+    "/assets/components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css"
+  );
   const outsideResponse = await app.request("/assets/../server/app.ts");
 
   expect(appStylesResponse.status).toBe(200);
@@ -111,6 +117,10 @@ test("serves imported component stylesheets from the client tree only", async ()
   expect(await componentStylesResponse.text()).toContain(".detail-table");
   expect(drawerStylesResponse.status).toBe(200);
   expect(await drawerStylesResponse.text()).toContain(".record-drawer-body");
+  expect(deleteAssetTypeStylesResponse.status).toBe(200);
+  expect(await deleteAssetTypeStylesResponse.text()).toContain(
+    ".delete-asset-type-summary"
+  );
   expect(outsideResponse.status).toBe(404);
 });
 
@@ -151,6 +161,59 @@ test("rejects duplicate asset type creation and rename conflicts", async () => {
   expect(await duplicateResponse.json()).toEqual({ error: "资产类型已存在" });
   expect(renameConflictResponse.status).toBe(409);
   expect(await renameConflictResponse.json()).toEqual({ error: "资产类型已存在" });
+});
+
+test("deletes an asset type and cascades its monthly records through API", async () => {
+  const cash = await createAssetType("现金");
+  const stock = await createAssetType("股票");
+  await createRecord({ assetTypeId: cash.id, month: "2026-04", value: 100 });
+  await createRecord({ assetTypeId: cash.id, month: "2026-05", value: 150 });
+  await createRecord({ assetTypeId: stock.id, month: "2026-05", value: 300 });
+
+  const invalidResponse = await app.request("/api/asset-types/not-a-number", {
+    method: "DELETE",
+  });
+  const deleteResponse = await app.request(`/api/asset-types/${cash.id}`, {
+    method: "DELETE",
+  });
+  const deletedAgainResponse = await app.request(`/api/asset-types/${cash.id}`, {
+    method: "DELETE",
+  });
+  const summaryResponse = await app.request("/api/summary?month=2026-05");
+  const summaryPayload = await summaryResponse.json();
+  const historyResponse = await app.request(`/api/asset-types/${cash.id}/history`);
+  const historyPayload = await historyResponse.json();
+  const logsResponse = await app.request(
+    "/api/operation-logs?action=asset_type_deleted&limit=1"
+  );
+  const logsPayload = await logsResponse.json();
+
+  expect(invalidResponse.status).toBe(400);
+  expect(await invalidResponse.json()).toEqual({
+    error: "资产类型 id 必须是正整数",
+  });
+  expect(deleteResponse.status).toBe(200);
+  expect(await deleteResponse.json()).toEqual({ ok: true });
+  expect(deletedAgainResponse.status).toBe(404);
+  expect(await deletedAgainResponse.json()).toEqual({ error: "资产类型不存在" });
+  expect(summaryPayload.items).toHaveLength(1);
+  expect(summaryPayload.items[0]).toMatchObject({
+    assetTypeId: stock.id,
+    month: "2026-05",
+    value: 300,
+    hasRecord: true,
+  });
+  expect(summaryPayload.totalValue).toBe(300);
+  expect(historyPayload.items).toEqual([]);
+  expect(logsResponse.status).toBe(200);
+  expect(logsPayload.items).toHaveLength(1);
+  expect(logsPayload.items[0]).toMatchObject({
+    action: "asset_type_deleted",
+    entityId: cash.id,
+    entityLabel: "现金",
+    reversible: false,
+  });
+  expect(logsPayload.items[0].beforePayload.records).toHaveLength(2);
 });
 
 test("rejects invalid record inputs before touching the database", async () => {

@@ -4,6 +4,7 @@ import type { OperationLogAction } from "../../db/store";
 const operationLogActions = new Set<OperationLogAction>([
   "asset_type_created",
   "asset_type_updated",
+  "asset_type_deleted",
   "record_created",
   "record_updated",
   "record_deleted",
