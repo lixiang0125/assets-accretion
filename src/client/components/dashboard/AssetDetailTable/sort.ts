@@ -25,8 +25,8 @@ export function sortSummaryItems(
   if (!sortState) return items;
 
   return [...items].sort((left, right) => {
-    const leftValue = sortableValue(left[sortState.key], sortState.direction);
-    const rightValue = sortableValue(right[sortState.key], sortState.direction);
+    const leftValue = sortableValue(sortableItemValue(left, sortState.key), sortState.direction);
+    const rightValue = sortableValue(sortableItemValue(right, sortState.key), sortState.direction);
     if (leftValue === rightValue) {
       return left.assetTypeName.localeCompare(right.assetTypeName, "zh-CN");
     }
@@ -34,6 +34,11 @@ export function sortSummaryItems(
       ? leftValue - rightValue
       : rightValue - leftValue;
   });
+}
+
+function sortableItemValue(item: SummaryItem, key: AssetDetailSortKey) {
+  if (key === "value") return item.effectiveValue;
+  return item[key];
 }
 
 function sortableValue(value: number | null, direction: SortDirection) {

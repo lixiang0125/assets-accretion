@@ -158,24 +158,28 @@ test("monthly summary includes every asset type even before that month is record
     assetTypeId: cash!.id,
     month: "2026-05",
     value: null,
+    effectiveMonth: "2026-04",
+    effectiveValue: 10000,
     hasRecord: false,
     previousMonth: "2026-04",
     previousValue: 10000,
-    changeValue: null,
-    changeRate: null,
+    changeValue: 0,
+    changeRate: 0,
   });
   expect(summary.items[1]).toMatchObject({
     assetTypeId: stock!.id,
     month: "2026-05",
     value: null,
+    effectiveMonth: null,
+    effectiveValue: null,
     hasRecord: false,
     previousMonth: null,
     previousValue: null,
   });
-  expect(summary.totalValue).toBe(0);
-  expect(summary.totalPreviousValue).toBe(0);
+  expect(summary.totalValue).toBe(10000);
+  expect(summary.totalPreviousValue).toBe(10000);
   expect(summary.totalChangeValue).toBe(0);
-  expect(summary.totalChangeRate).toBeNull();
+  expect(summary.totalChangeRate).toBe(0);
 });
 
 test("monthly summary can compare against any selected month", () => {
@@ -238,7 +242,7 @@ test("lists portfolio trend by month", () => {
 
   expect(assetStore.listPortfolioTrend()).toEqual([
     { month: "2026-04", totalValue: 100 },
-    { month: "2026-05", totalValue: 120 },
+    { month: "2026-05", totalValue: 180 },
   ]);
 });
 

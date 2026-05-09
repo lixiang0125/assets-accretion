@@ -7,6 +7,18 @@
   font-weight: 700;
 }
 
+.carried-value {
+  display: grid;
+  gap: 3px;
+  font-weight: 800;
+}
+
+.carried-value span:last-child {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .asset-link-button {
   height: auto;
   padding: 0;

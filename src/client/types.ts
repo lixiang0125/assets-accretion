@@ -11,6 +11,8 @@ export type SummaryItem = {
   assetTypeName: string;
   month: string;
   value: number | null;
+  effectiveMonth: string | null;
+  effectiveValue: number | null;
   note: string | null;
   createdAt: string | null;
   updatedAt: string | null;

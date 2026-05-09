@@ -108,6 +108,11 @@ export function AssetDetailTable({
                       <TableCell>
                         {item.hasRecord ? (
                           formatCurrency(item.value)
+                        ) : item.effectiveValue !== null ? (
+                          <span className="carried-value">
+                            <span>{formatCurrency(item.effectiveValue)}</span>
+                            <span>沿用 {item.effectiveMonth}</span>
+                          </span>
                         ) : (
                           <span className="pending-record-text">待记录</span>
                         )}

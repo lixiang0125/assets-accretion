@@ -337,7 +337,7 @@ test("lists portfolio trend through API", async () => {
   expect(response.status).toBe(200);
   expect(payload.items).toEqual([
     { month: "2026-04", totalValue: 100 },
-    { month: "2026-05", totalValue: 120 },
+    { month: "2026-05", totalValue: 180 },
   ]);
 });
 
@@ -384,11 +384,15 @@ test("updates, deletes, and lists asset history through API", async () => {
     assetTypeId,
     month: "2026-05",
     value: null,
+    effectiveMonth: "2026-04",
+    effectiveValue: 10000,
     hasRecord: false,
     previousMonth: "2026-04",
     previousValue: 10000,
   });
-  expect(summaryAfterDelete.totalValue).toBe(0);
+  expect(summaryAfterDelete.totalValue).toBe(10000);
+  expect(summaryAfterDelete.totalPreviousValue).toBe(10000);
+  expect(summaryAfterDelete.totalChangeValue).toBe(0);
 
   const deletedAgainResponse = await app.request(`/api/records/${recordId}`, {
     method: "DELETE",

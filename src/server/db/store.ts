@@ -28,6 +28,8 @@ export type AssetSummary = {
   assetTypeName: string;
   month: string;
   value: number | null;
+  effectiveMonth: string | null;
+  effectiveValue: number | null;
   note: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -108,6 +110,8 @@ type AssetSummaryRow = {
   asset_type_name: string;
   month: string;
   value: number | null;
+  effective_month: string | null;
+  effective_value: number | null;
   note: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -195,10 +199,11 @@ export function createAssetStore(filename = "data/assets.sqlite") {
   });
 
   const mapSummary = (row: AssetSummaryRow): AssetSummary => {
+    const effectiveValue = row.effective_value;
     const changeValue =
-      row.value === null || row.previous_value === null
+      effectiveValue === null || row.previous_value === null
         ? null
-        : row.value - row.previous_value;
+        : effectiveValue - row.previous_value;
     const changeRate =
       changeValue === null || row.previous_value === null || row.previous_value === 0
         ? null
@@ -210,6 +215,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
       assetTypeName: row.asset_type_name,
       month: row.month,
       value: row.value,
+      effectiveMonth: row.effective_month,
+      effectiveValue,
       note: row.note,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -846,6 +853,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
             t.name AS asset_type_name,
             r.month,
             r.value,
+            r.month AS effective_month,
+            r.value AS effective_value,
             r.note,
             r.created_at,
             r.updated_at,
@@ -894,6 +903,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
               t.name AS asset_type_name,
               COALESCE(r.month, $month) AS month,
               r.value,
+              effective.month AS effective_month,
+              effective.value AS effective_value,
               r.note,
               r.created_at,
               r.updated_at,
@@ -902,6 +913,17 @@ export function createAssetStore(filename = "data/assets.sqlite") {
             FROM asset_types t
             LEFT JOIN asset_records r ON r.asset_type_id = t.id
               AND r.month = $month
+            LEFT JOIN asset_records effective ON effective.id = COALESCE(
+              r.id,
+              (
+                SELECT e.id
+                FROM asset_records e
+                WHERE e.asset_type_id = t.id
+                  AND e.month < $month
+                ORDER BY e.month DESC
+                LIMIT 1
+              )
+            )
             ${comparisonJoin}
             ORDER BY t.name
           `;
@@ -924,6 +946,8 @@ export function createAssetStore(filename = "data/assets.sqlite") {
           t.name AS asset_type_name,
           r.month,
           r.value,
+          r.month AS effective_month,
+          r.value AS effective_value,
           r.note,
           r.created_at,
           r.updated_at,
@@ -949,14 +973,19 @@ export function createAssetStore(filename = "data/assets.sqlite") {
 
     getPortfolioSummary(month?: string, compareMonth?: string) {
       const rows = this.listSummary(month, compareMonth);
-      const recordedRows = rows.filter((row) => row.value !== null);
-      const totalValue = recordedRows.reduce((sum, row) => sum + row.value!, 0);
+      const effectiveRows = rows.filter((row) => row.effectiveValue !== null);
+      const totalValue = effectiveRows.reduce(
+        (sum, row) => sum + row.effectiveValue!,
+        0
+      );
       const totalPreviousValue = rows.reduce(
-        (sum, row) => sum + (row.value === null ? 0 : row.previousValue ?? 0),
+        (sum, row) =>
+          sum + (row.effectiveValue === null ? 0 : row.previousValue ?? 0),
         0
       );
       const totalChangeValue = rows.reduce(
-        (sum, row) => sum + (row.value === null ? 0 : row.changeValue ?? 0),
+        (sum, row) =>
+          sum + (row.effectiveValue === null ? 0 : row.changeValue ?? 0),
         0
       );
 
@@ -977,11 +1006,24 @@ export function createAssetStore(filename = "data/assets.sqlite") {
         .query<PortfolioTrendRow, []>(
           `
           SELECT
-            month,
-            SUM(value) AS total_value
-          FROM asset_records
-          GROUP BY month
-          ORDER BY month ASC
+            m.month,
+            COALESCE(
+              SUM(
+                (
+                  SELECT r.value
+                  FROM asset_records r
+                  WHERE r.asset_type_id = t.id
+                    AND r.month <= m.month
+                  ORDER BY r.month DESC
+                  LIMIT 1
+                )
+              ),
+              0
+            ) AS total_value
+          FROM (SELECT DISTINCT month FROM asset_records) m
+          CROSS JOIN asset_types t
+          GROUP BY m.month
+          ORDER BY m.month ASC
         `
         )
         .all();
