@@ -59,7 +59,7 @@
   stroke: var(--color-brand-strong);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 2.5px;
+  stroke-width: 2px;
 }
 
 .portfolio-trend-point {
