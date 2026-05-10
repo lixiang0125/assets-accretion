@@ -35,13 +35,19 @@ export function PortfolioTrendChart({
   const height = 182;
   const padding = { top: 24, right: 38, bottom: 34, left: 72 };
   const sortedItems = [...items].sort((left, right) =>
-    left.month.localeCompare(right.month)
+    left.month.localeCompare(right.month),
   );
-  const selectedIndex = sortedItems.findIndex((item) => item.month === selectedMonth);
+  const selectedIndex = sortedItems.findIndex(
+    (item) => item.month === selectedMonth,
+  );
 
   if (sortedItems.length === 0) {
     return (
-      <Card className="portfolio-trend-card" aria-label="总资产月度趋势" role="region">
+      <Card
+        className="portfolio-trend-card"
+        aria-label="总资产月度趋势"
+        role="region"
+      >
         <CardHeader className="portfolio-trend-header">
           <div>
             <CardTitle>总资产趋势</CardTitle>
@@ -83,11 +89,17 @@ export function PortfolioTrendChart({
   ].filter(
     (point, index, list): point is ChartPoint =>
       Boolean(point) &&
-      list.findIndex((candidate) => candidate?.item.month === point?.item.month) === index
+      list.findIndex(
+        (candidate) => candidate?.item.month === point?.item.month,
+      ) === index,
   );
 
   return (
-    <Card className="portfolio-trend-card" aria-label="总资产月度趋势" role="region">
+    <Card
+      className="portfolio-trend-card"
+      aria-label="总资产月度趋势"
+      role="region"
+    >
       <CardHeader className="portfolio-trend-header">
         <div>
           <CardTitle>总资产趋势</CardTitle>
@@ -150,10 +162,14 @@ export function PortfolioTrendChart({
             return (
               <circle
                 key={point.item.month}
-                className={isSelected ? "portfolio-trend-point is-selected" : "portfolio-trend-point"}
+                className={
+                  isSelected
+                    ? "portfolio-trend-point is-selected"
+                    : "portfolio-trend-point"
+                }
                 cx={point.x}
                 cy={point.y}
-                r={isSelected ? 4 : 3}
+                r={isSelected ? 3 : 2}
               />
             );
           })}

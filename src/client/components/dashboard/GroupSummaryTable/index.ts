@@ -1,0 +1,1 @@
+export { GroupSummaryTable } from "./GroupSummaryTable";

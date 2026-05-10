@@ -25,8 +25,8 @@ afterEach(() => {
   }
 });
 
-async function createAssetType(name = `资产-${crypto.randomUUID()}`) {
-  const response = await app.request("/api/asset-types", {
+async function createAssetGroup(name = `分组-${crypto.randomUUID()}`) {
+  const response = await app.request("/api/asset-groups", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
@@ -34,6 +34,25 @@ async function createAssetType(name = `资产-${crypto.randomUUID()}`) {
   const payload = await response.json();
   expect(response.status).toBe(201);
   return payload.item as { id: number; name: string };
+}
+
+async function createAssetType(
+  name = `资产-${crypto.randomUUID()}`,
+  groupId?: number,
+) {
+  const response = await app.request("/api/asset-types", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, groupId }),
+  });
+  const payload = await response.json();
+  expect(response.status).toBe(201);
+  return payload.item as {
+    id: number;
+    name: string;
+    groupId: number | null;
+    groupName: string | null;
+  };
 }
 
 async function createRecord(input: {
@@ -67,8 +86,8 @@ test("serves React application shell", async () => {
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(response.headers.get("content-type")).toContain("text/html");
   expect(html).toContain('<div id="root"></div>');
-  expect(html).toContain('/assets/styles.css?v=');
-  expect(html).toContain('/assets/app.js?v=');
+  expect(html).toContain("/assets/styles.css?v=");
+  expect(html).toContain("/assets/app.js?v=");
 });
 
 test("serves bundled React client", async () => {
@@ -90,10 +109,13 @@ test("serves separated client stylesheet", async () => {
   expect(response.headers.get("content-type")).toContain("text/css");
   expect(stylesheet).toContain('@import "./App/App.css"');
   expect(stylesheet).toContain(
-    '@import "./components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css"'
+    '@import "./components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css"',
   );
   expect(stylesheet).toContain(
-    '@import "./components/dashboard/PortfolioTrendChart/PortfolioTrendChart.css"'
+    '@import "./components/dashboard/GroupSummaryTable/GroupSummaryTable.css"',
+  );
+  expect(stylesheet).toContain(
+    '@import "./components/dashboard/PortfolioTrendChart/PortfolioTrendChart.css"',
   );
 });
 
@@ -101,13 +123,16 @@ test("serves imported component stylesheets from the client tree only", async ()
   const appStylesResponse = await app.request("/assets/App/App.css");
   const appStyles = await appStylesResponse.text();
   const componentStylesResponse = await app.request(
-    "/assets/components/dashboard/AssetDetailTable/AssetDetailTable.css"
+    "/assets/components/dashboard/AssetDetailTable/AssetDetailTable.css",
   );
   const drawerStylesResponse = await app.request(
-    "/assets/components/dashboard/RecordDrawer/RecordDrawer.css"
+    "/assets/components/dashboard/RecordDrawer/RecordDrawer.css",
   );
   const deleteAssetTypeStylesResponse = await app.request(
-    "/assets/components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css"
+    "/assets/components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css",
+  );
+  const groupSummaryStylesResponse = await app.request(
+    "/assets/components/dashboard/GroupSummaryTable/GroupSummaryTable.css",
   );
   const outsideResponse = await app.request("/assets/../server/app.ts");
 
@@ -119,7 +144,11 @@ test("serves imported component stylesheets from the client tree only", async ()
   expect(await drawerStylesResponse.text()).toContain(".record-drawer-body");
   expect(deleteAssetTypeStylesResponse.status).toBe(200);
   expect(await deleteAssetTypeStylesResponse.text()).toContain(
-    ".delete-asset-type-summary"
+    ".delete-asset-type-summary",
+  );
+  expect(groupSummaryStylesResponse.status).toBe(200);
+  expect(await groupSummaryStylesResponse.text()).toContain(
+    ".group-summary-table",
   );
   expect(outsideResponse.status).toBe(404);
 });
@@ -137,9 +166,13 @@ test("rejects malformed JSON and invalid asset type names", async () => {
   });
 
   expect(malformedResponse.status).toBe(400);
-  expect(await malformedResponse.json()).toEqual({ error: "请求体必须是合法 JSON" });
+  expect(await malformedResponse.json()).toEqual({
+    error: "请求体必须是合法 JSON",
+  });
   expect(emptyNameResponse.status).toBe(400);
-  expect(await emptyNameResponse.json()).toEqual({ error: "资产类型名称不能为空" });
+  expect(await emptyNameResponse.json()).toEqual({
+    error: "资产类型名称不能为空",
+  });
 });
 
 test("rejects duplicate asset type creation and rename conflicts", async () => {
@@ -151,16 +184,81 @@ test("rejects duplicate asset type creation and rename conflicts", async () => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: "现金" }),
   });
-  const renameConflictResponse = await app.request(`/api/asset-types/${stock.id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: cash.name }),
-  });
+  const renameConflictResponse = await app.request(
+    `/api/asset-types/${stock.id}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: cash.name }),
+    },
+  );
 
   expect(duplicateResponse.status).toBe(409);
   expect(await duplicateResponse.json()).toEqual({ error: "资产类型已存在" });
   expect(renameConflictResponse.status).toBe(409);
-  expect(await renameConflictResponse.json()).toEqual({ error: "资产类型已存在" });
+  expect(await renameConflictResponse.json()).toEqual({
+    error: "资产类型已存在",
+  });
+});
+
+test("creates asset groups and assigns them through API", async () => {
+  const cashGroup = await createAssetGroup("现金类");
+  const liquidGroup = await createAssetGroup("流动资金");
+  const cash = await createAssetType("现金", cashGroup.id);
+
+  expect(cash.groupId).toBe(cashGroup.id);
+  expect(cash.groupName).toBe("现金类");
+
+  const updateResponse = await app.request(`/api/asset-types/${cash.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "现金账户",
+      description: "活期",
+      groupId: liquidGroup.id,
+    }),
+  });
+  const updatePayload = await updateResponse.json();
+  const groupsResponse = await app.request("/api/asset-groups");
+  const groupsPayload = await groupsResponse.json();
+  const listResponse = await app.request("/api/asset-types");
+  const listPayload = await listResponse.json();
+
+  expect(updateResponse.status).toBe(200);
+  expect(updatePayload.item).toMatchObject({
+    id: cash.id,
+    name: "现金账户",
+    description: "活期",
+    groupId: liquidGroup.id,
+    groupName: "流动资金",
+  });
+  expect(
+    groupsPayload.items.map((item: { name: string }) => item.name),
+  ).toEqual(["流动资金", "现金类"]);
+  expect(listPayload.items[0]).toMatchObject({
+    groupId: liquidGroup.id,
+    groupName: "流动资金",
+  });
+
+  const invalidGroupResponse = await app.request("/api/asset-types", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "股票", groupId: 0 }),
+  });
+  expect(invalidGroupResponse.status).toBe(400);
+  expect(await invalidGroupResponse.json()).toEqual({
+    error: "资产分组 id 必须是正整数",
+  });
+
+  const missingGroupResponse = await app.request("/api/asset-types", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "股票", groupId: 999999 }),
+  });
+  expect(missingGroupResponse.status).toBe(404);
+  expect(await missingGroupResponse.json()).toEqual({
+    error: "资产分组不存在",
+  });
 });
 
 test("deletes an asset type and cascades its monthly records through API", async () => {
@@ -176,15 +274,20 @@ test("deletes an asset type and cascades its monthly records through API", async
   const deleteResponse = await app.request(`/api/asset-types/${cash.id}`, {
     method: "DELETE",
   });
-  const deletedAgainResponse = await app.request(`/api/asset-types/${cash.id}`, {
-    method: "DELETE",
-  });
+  const deletedAgainResponse = await app.request(
+    `/api/asset-types/${cash.id}`,
+    {
+      method: "DELETE",
+    },
+  );
   const summaryResponse = await app.request("/api/summary?month=2026-05");
   const summaryPayload = await summaryResponse.json();
-  const historyResponse = await app.request(`/api/asset-types/${cash.id}/history`);
+  const historyResponse = await app.request(
+    `/api/asset-types/${cash.id}/history`,
+  );
   const historyPayload = await historyResponse.json();
   const logsResponse = await app.request(
-    "/api/operation-logs?action=asset_type_deleted&limit=1"
+    "/api/operation-logs?action=asset_type_deleted&limit=1",
   );
   const logsPayload = await logsResponse.json();
 
@@ -195,7 +298,9 @@ test("deletes an asset type and cascades its monthly records through API", async
   expect(deleteResponse.status).toBe(200);
   expect(await deleteResponse.json()).toEqual({ ok: true });
   expect(deletedAgainResponse.status).toBe(404);
-  expect(await deletedAgainResponse.json()).toEqual({ error: "资产类型不存在" });
+  expect(await deletedAgainResponse.json()).toEqual({
+    error: "资产类型不存在",
+  });
   expect(summaryPayload.items).toHaveLength(1);
   expect(summaryPayload.items[0]).toMatchObject({
     assetTypeId: stock.id,
@@ -271,29 +376,43 @@ test("rejects records for missing asset types", async () => {
 test("rejects record updates that collide with another month", async () => {
   const asset = await createAssetType("现金");
   await createRecord({ assetTypeId: asset.id, month: "2026-04", value: 100 });
-  const mayRecord = await createRecord({ assetTypeId: asset.id, month: "2026-05", value: 150 });
+  const mayRecord = await createRecord({
+    assetTypeId: asset.id,
+    month: "2026-05",
+    value: 150,
+  });
 
   const response = await app.request(`/api/records/${mayRecord.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ assetTypeId: asset.id, month: "2026-04", value: 180 }),
+    body: JSON.stringify({
+      assetTypeId: asset.id,
+      month: "2026-04",
+      value: 180,
+    }),
   });
 
   expect(response.status).toBe(409);
-  expect(await response.json()).toEqual({ error: "该资产类型和月份已存在记录" });
+  expect(await response.json()).toEqual({
+    error: "该资产类型和月份已存在记录",
+  });
 });
 
 test("rejects invalid month query parameters", async () => {
   const recordsResponse = await app.request("/api/records?month=not-a-month");
   const summaryResponse = await app.request("/api/summary?month=2026-00");
   const compareSummaryResponse = await app.request(
-    "/api/summary?month=2026-05&compareMonth=2026-13"
+    "/api/summary?month=2026-05&compareMonth=2026-13",
   );
 
   expect(recordsResponse.status).toBe(400);
-  expect(await recordsResponse.json()).toEqual({ error: "月份格式必须是 YYYY-MM" });
+  expect(await recordsResponse.json()).toEqual({
+    error: "月份格式必须是 YYYY-MM",
+  });
   expect(summaryResponse.status).toBe(400);
-  expect(await summaryResponse.json()).toEqual({ error: "月份格式必须是 YYYY-MM" });
+  expect(await summaryResponse.json()).toEqual({
+    error: "月份格式必须是 YYYY-MM",
+  });
   expect(compareSummaryResponse.status).toBe(400);
   expect(await compareSummaryResponse.json()).toEqual({
     error: "对比月份格式必须是 YYYY-MM",
@@ -307,7 +426,7 @@ test("summarizes changes against a selected comparison month", async () => {
   await createRecord({ assetTypeId: asset.id, month: "2026-05", value: 150 });
 
   const response = await app.request(
-    "/api/summary?month=2026-05&compareMonth=2026-01"
+    "/api/summary?month=2026-05&compareMonth=2026-01",
   );
   const payload = await response.json();
 
@@ -322,6 +441,56 @@ test("summarizes changes against a selected comparison month", async () => {
     changeValue: 110,
     changeRate: 2.75,
   });
+});
+
+test("summarizes asset groups through API", async () => {
+  const cashGroup = await createAssetGroup("现金类");
+  const stockGroup = await createAssetGroup("证券");
+  const cash = await createAssetType("现金", cashGroup.id);
+  const alipay = await createAssetType("支付宝", cashGroup.id);
+  const stock = await createAssetType("股票", stockGroup.id);
+
+  await createRecord({ assetTypeId: cash.id, month: "2026-04", value: 100 });
+  await createRecord({ assetTypeId: alipay.id, month: "2026-05", value: 50 });
+  await createRecord({ assetTypeId: stock.id, month: "2026-04", value: 200 });
+  await createRecord({ assetTypeId: stock.id, month: "2026-05", value: 260 });
+
+  const response = await app.request("/api/summary?month=2026-05");
+  const payload = await response.json();
+
+  expect(response.status).toBe(200);
+  expect(
+    payload.items.find(
+      (item: { assetTypeId: number }) => item.assetTypeId === cash.id,
+    ),
+  ).toMatchObject({
+    assetGroupId: cashGroup.id,
+    assetGroupName: "现金类",
+    value: null,
+    effectiveValue: 100,
+  });
+  expect(payload.groups).toEqual([
+    {
+      groupId: stockGroup.id,
+      groupName: "证券",
+      assetTypeCount: 1,
+      recordedAssetTypeCount: 1,
+      totalValue: 260,
+      totalPreviousValue: 200,
+      totalChangeValue: 60,
+      totalChangeRate: 0.3,
+    },
+    {
+      groupId: cashGroup.id,
+      groupName: "现金类",
+      assetTypeCount: 2,
+      recordedAssetTypeCount: 1,
+      totalValue: 150,
+      totalPreviousValue: 100,
+      totalChangeValue: 0,
+      totalChangeRate: 0,
+    },
+  ]);
 });
 
 test("lists portfolio trend through API", async () => {
@@ -346,7 +515,11 @@ test("updates, deletes, and lists asset history through API", async () => {
   const assetTypeId = asset.id;
 
   await createRecord({ assetTypeId, month: "2026-04", value: 10000 });
-  const mayRecord = await createRecord({ assetTypeId, month: "2026-05", value: 12000 });
+  const mayRecord = await createRecord({
+    assetTypeId,
+    month: "2026-05",
+    value: 12000,
+  });
   const recordId = mayRecord.id;
 
   const updateResponse = await app.request(`/api/records/${recordId}`, {
@@ -361,22 +534,23 @@ test("updates, deletes, and lists asset history through API", async () => {
   });
   const updatePayload = await updateResponse.json();
   const historyResponse = await app.request(
-    `/api/asset-types/${assetTypeId}/history`
+    `/api/asset-types/${assetTypeId}/history`,
   );
   const historyPayload = await historyResponse.json();
   const deleteResponse = await app.request(`/api/records/${recordId}`, {
     method: "DELETE",
   });
-  const summaryAfterDeleteResponse = await app.request("/api/summary?month=2026-05");
+  const summaryAfterDeleteResponse = await app.request(
+    "/api/summary?month=2026-05",
+  );
   const summaryAfterDelete = await summaryAfterDeleteResponse.json();
 
   expect(updateResponse.status).toBe(200);
   expect(updatePayload.item.value).toBe(12500);
   expect(updatePayload.item.note).toBe("更新后");
-  expect(historyPayload.items.map((item: { month: string }) => item.month)).toEqual([
-    "2026-04",
-    "2026-05",
-  ]);
+  expect(
+    historyPayload.items.map((item: { month: string }) => item.month),
+  ).toEqual(["2026-04", "2026-05"]);
   expect(historyPayload.items[1].changeValue).toBe(2500);
   expect(deleteResponse.status).toBe(200);
   expect(summaryAfterDelete.items).toHaveLength(1);
@@ -416,7 +590,7 @@ test("lists operation logs and restores a deleted monthly record", async () => {
   expect(deleteResponse.status).toBe(200);
 
   const logsResponse = await app.request(
-    "/api/operation-logs?action=record_deleted&limit=10"
+    "/api/operation-logs?action=record_deleted&limit=10",
   );
   const logsPayload = await logsResponse.json();
   const deleteLog = logsPayload.items[0];
@@ -435,7 +609,7 @@ test("lists operation logs and restores a deleted monthly record", async () => {
 
   const restoreResponse = await app.request(
     `/api/operation-logs/${deleteLog.id}/restore`,
-    { method: "POST" }
+    { method: "POST" },
   );
   const restorePayload = await restoreResponse.json();
 
@@ -456,14 +630,14 @@ test("lists operation logs and restores a deleted monthly record", async () => {
   expect(summaryPayload.items[0].hasRecord).toBe(true);
 
   const refreshedLogsResponse = await app.request(
-    "/api/operation-logs?action=record_deleted"
+    "/api/operation-logs?action=record_deleted",
   );
   const refreshedLogsPayload = await refreshedLogsResponse.json();
   expect(refreshedLogsPayload.items[0].restoredAt).toBeString();
 
   const restoreAgainResponse = await app.request(
     `/api/operation-logs/${deleteLog.id}/restore`,
-    { method: "POST" }
+    { method: "POST" },
   );
   expect(restoreAgainResponse.status).toBe(409);
   expect(await restoreAgainResponse.json()).toEqual({
@@ -473,20 +647,22 @@ test("lists operation logs and restores a deleted monthly record", async () => {
 
 test("rejects invalid operation log queries and restore ids", async () => {
   const invalidActionResponse = await app.request(
-    "/api/operation-logs?action=unknown"
+    "/api/operation-logs?action=unknown",
   );
   const invalidLimitResponse = await app.request("/api/operation-logs?limit=0");
   const invalidRestoreIdResponse = await app.request(
     "/api/operation-logs/not-a-number/restore",
-    { method: "POST" }
+    { method: "POST" },
   );
   const missingRestoreResponse = await app.request(
     "/api/operation-logs/999999/restore",
-    { method: "POST" }
+    { method: "POST" },
   );
 
   expect(invalidActionResponse.status).toBe(400);
-  expect(await invalidActionResponse.json()).toEqual({ error: "操作类型不存在" });
+  expect(await invalidActionResponse.json()).toEqual({
+    error: "操作类型不存在",
+  });
   expect(invalidLimitResponse.status).toBe(400);
   expect(await invalidLimitResponse.json()).toEqual({
     error: "limit 必须是 1 到 500 的整数",
@@ -496,7 +672,9 @@ test("rejects invalid operation log queries and restore ids", async () => {
     error: "操作记录 id 必须是正整数",
   });
   expect(missingRestoreResponse.status).toBe(404);
-  expect(await missingRestoreResponse.json()).toEqual({ error: "操作记录不存在" });
+  expect(await missingRestoreResponse.json()).toEqual({
+    error: "操作记录不存在",
+  });
 });
 
 test("rejects non-reversible and conflicting operation restores", async () => {
@@ -508,12 +686,12 @@ test("rejects non-reversible and conflicting operation restores", async () => {
   });
 
   const createLogsResponse = await app.request(
-    "/api/operation-logs?action=record_created"
+    "/api/operation-logs?action=record_created",
   );
   const createLogsPayload = await createLogsResponse.json();
   const restoreCreateLogResponse = await app.request(
     `/api/operation-logs/${createLogsPayload.items[0].id}/restore`,
-    { method: "POST" }
+    { method: "POST" },
   );
 
   expect(restoreCreateLogResponse.status).toBe(409);
@@ -527,7 +705,7 @@ test("rejects non-reversible and conflicting operation restores", async () => {
   expect(deleteResponse.status).toBe(200);
 
   const deleteLogsResponse = await app.request(
-    "/api/operation-logs?action=record_deleted&limit=1"
+    "/api/operation-logs?action=record_deleted&limit=1",
   );
   const deleteLogsPayload = await deleteLogsResponse.json();
   const deleteLog = deleteLogsPayload.items[0];
@@ -539,7 +717,7 @@ test("rejects non-reversible and conflicting operation restores", async () => {
   });
   const conflictRestoreResponse = await app.request(
     `/api/operation-logs/${deleteLog.id}/restore`,
-    { method: "POST" }
+    { method: "POST" },
   );
 
   expect(conflictRestoreResponse.status).toBe(409);

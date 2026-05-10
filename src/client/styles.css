@@ -3,6 +3,7 @@
 @import "./components/dashboard/AssetDetailTable/AssetDetailTable.css";
 @import "./components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css";
 @import "./components/dashboard/DeleteRecordDialog/DeleteRecordDialog.css";
+@import "./components/dashboard/GroupSummaryTable/GroupSummaryTable.css";
 @import "./components/dashboard/HistoryChart/HistoryChart.css";
 @import "./components/dashboard/HistoryDrawer/HistoryDrawer.css";
 @import "./components/dashboard/MetricCard/MetricCard.css";

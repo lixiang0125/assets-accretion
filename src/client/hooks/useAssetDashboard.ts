@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
+  createAssetGroup,
   createAssetType,
   deleteAssetType,
   deleteRecord,
+  fetchAssetGroups,
   fetchAssetHistory,
   fetchAssetTypes,
   fetchPortfolioTrend,
@@ -11,6 +13,7 @@ import {
   updateAssetType,
 } from "../api/assets";
 import type {
+  AssetGroup,
   AssetType,
   PortfolioSummary,
   PortfolioTrendPoint,
@@ -34,14 +37,21 @@ export function useAssetDashboard() {
   const [month, setMonth] = useState(initialMonth);
   const [compareMonth, setCompareMonth] = useState(initialCompareMonth);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
+  const [assetGroups, setAssetGroups] = useState<AssetGroup[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
-  const [portfolioTrend, setPortfolioTrend] = useState<PortfolioTrendPoint[]>([]);
+  const [portfolioTrend, setPortfolioTrend] = useState<PortfolioTrendPoint[]>(
+    [],
+  );
   const [assetTypeName, setAssetTypeName] = useState("");
   const [assetTypeDescription, setAssetTypeDescription] = useState("");
-  const [recordForm, setRecordForm] = useState<RecordFormState>(emptyRecordForm);
+  const [assetTypeGroupId, setAssetTypeGroupId] = useState("");
+  const [assetGroupName, setAssetGroupName] = useState("");
+  const [recordForm, setRecordForm] =
+    useState<RecordFormState>(emptyRecordForm);
   const [editingRecord, setEditingRecord] = useState<SummaryItem | null>(null);
   const [isRecordDrawerOpen, setIsRecordDrawerOpen] = useState(false);
-  const [pendingDeleteRecord, setPendingDeleteRecord] = useState<SummaryItem | null>(null);
+  const [pendingDeleteRecord, setPendingDeleteRecord] =
+    useState<SummaryItem | null>(null);
   const [deleteConfirmStep, setDeleteConfirmStep] = useState<1 | 2>(1);
   const [isDeletingRecord, setIsDeletingRecord] = useState(false);
   const [drawerAsset, setDrawerAsset] = useState<AssetType | null>(null);
@@ -50,8 +60,12 @@ export function useAssetDashboard() {
   const [isEditingDrawerAsset, setIsEditingDrawerAsset] = useState(false);
   const [drawerAssetName, setDrawerAssetName] = useState("");
   const [drawerAssetDescription, setDrawerAssetDescription] = useState("");
-  const [pendingDeleteAssetType, setPendingDeleteAssetType] = useState<AssetType | null>(null);
-  const [deleteAssetTypeConfirmStep, setDeleteAssetTypeConfirmStep] = useState<1 | 2>(1);
+  const [drawerAssetGroupId, setDrawerAssetGroupId] = useState("");
+  const [pendingDeleteAssetType, setPendingDeleteAssetType] =
+    useState<AssetType | null>(null);
+  const [deleteAssetTypeConfirmStep, setDeleteAssetTypeConfirmStep] = useState<
+    1 | 2
+  >(1);
   const [isDeletingAssetType, setIsDeletingAssetType] = useState(false);
   const [status, setStatus] = useState("准备就绪");
   const [statusType, setStatusType] = useState<StatusType>("idle");
@@ -80,7 +94,16 @@ export function useAssetDashboard() {
     return data.items;
   }
 
-  async function loadSummary(nextMonth = month, nextCompareMonth = compareMonth) {
+  async function loadAssetGroups() {
+    const data = await fetchAssetGroups();
+    setAssetGroups(data.items);
+    return data.items;
+  }
+
+  async function loadSummary(
+    nextMonth = month,
+    nextCompareMonth = compareMonth,
+  ) {
     const data = await fetchSummary(nextMonth, nextCompareMonth);
     setSummary(data);
     return data;
@@ -96,6 +119,7 @@ export function useAssetDashboard() {
     setDrawerAsset(assetType);
     setDrawerAssetName(assetType.name);
     setDrawerAssetDescription(assetType.description ?? "");
+    setDrawerAssetGroupId(assetType.groupId?.toString() ?? "");
     setIsHistoryLoading(true);
     try {
       const data = await fetchAssetHistory(assetType.id);
@@ -108,14 +132,16 @@ export function useAssetDashboard() {
   }
 
   async function refresh(message = "数据已刷新") {
-    const [nextAssetTypes] = await Promise.all([
+    const [, nextAssetTypes] = await Promise.all([
+      loadAssetGroups(),
       loadAssetTypes(),
       loadSummary(month, compareMonth),
       loadPortfolioTrend(),
     ]);
     if (drawerAsset) {
       const nextDrawerAsset =
-        nextAssetTypes.find((assetType) => assetType.id === drawerAsset.id) ?? null;
+        nextAssetTypes.find((assetType) => assetType.id === drawerAsset.id) ??
+        null;
       if (nextDrawerAsset) {
         await loadAssetHistory(nextDrawerAsset);
       } else {
@@ -140,8 +166,26 @@ export function useAssetDashboard() {
   }
 
   useEffect(() => {
-    Promise.all([loadAssetTypes(), loadSummary(), loadPortfolioTrend()]).catch(showError);
+    Promise.all([
+      loadAssetGroups(),
+      loadAssetTypes(),
+      loadSummary(),
+      loadPortfolioTrend(),
+    ]).catch(showError);
   }, []);
+
+  async function submitAssetGroup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      await createAssetGroup({ name: assetGroupName });
+      setAssetGroupName("");
+      await refresh("资产分组已添加");
+      return true;
+    } catch (error) {
+      showError(error);
+      return false;
+    }
+  }
 
   async function submitAssetType(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,9 +193,11 @@ export function useAssetDashboard() {
       await createAssetType({
         name: assetTypeName,
         description: assetTypeDescription,
+        groupId: assetTypeGroupId ? Number(assetTypeGroupId) : null,
       });
       setAssetTypeName("");
       setAssetTypeDescription("");
+      setAssetTypeGroupId("");
       await refresh("资产类型已添加");
       return true;
     } catch (error) {
@@ -167,10 +213,12 @@ export function useAssetDashboard() {
       const data = await updateAssetType(drawerAsset.id, {
         name: drawerAssetName,
         description: drawerAssetDescription,
+        groupId: drawerAssetGroupId ? Number(drawerAssetGroupId) : null,
       });
       setDrawerAsset(data.item);
       setDrawerAssetName(data.item.name);
       setDrawerAssetDescription(data.item.description ?? "");
+      setDrawerAssetGroupId(data.item.groupId?.toString() ?? "");
       setIsEditingDrawerAsset(false);
       await refresh("资产类型信息已更新");
       return true;
@@ -185,7 +233,7 @@ export function useAssetDashboard() {
     try {
       await saveRecord(
         { ...recordForm, assetTypeId: selectedAssetTypeId },
-        editingRecord?.id ?? undefined
+        editingRecord?.id ?? undefined,
       );
       await refresh(editingRecord ? "月度价值已更新" : "月度价值已保存");
       resetRecordForm();
@@ -199,7 +247,7 @@ export function useAssetDashboard() {
     setMonth(targetMonth);
     setCompareMonth(nextCompareMonth);
     setRecordForm((current) =>
-      editingRecord ? current : { ...current, month: targetMonth }
+      editingRecord ? current : { ...current, month: targetMonth },
     );
     try {
       await loadSummary(targetMonth, nextCompareMonth);
@@ -313,6 +361,8 @@ export function useAssetDashboard() {
         id: item.assetTypeId,
         name: item.assetTypeName,
         description: null,
+        groupId: item.assetGroupId,
+        groupName: item.assetGroupName,
         createdAt: item.createdAt ?? "",
       }
     );
@@ -334,6 +384,7 @@ export function useAssetDashboard() {
     if (!drawerAsset) return;
     setDrawerAssetName(drawerAsset.name);
     setDrawerAssetDescription(drawerAsset.description ?? "");
+    setDrawerAssetGroupId(drawerAsset.groupId?.toString() ?? "");
     setIsEditingDrawerAsset(true);
     setStatus("正在编辑资产类型信息");
     setStatusType("idle");
@@ -343,6 +394,7 @@ export function useAssetDashboard() {
     if (!drawerAsset) return;
     setDrawerAssetName(drawerAsset.name);
     setDrawerAssetDescription(drawerAsset.description ?? "");
+    setDrawerAssetGroupId(drawerAsset.groupId?.toString() ?? "");
     setIsEditingDrawerAsset(false);
   }
 
@@ -395,13 +447,17 @@ export function useAssetDashboard() {
   }
 
   return {
+    assetGroupName,
+    assetGroups,
     assetTypeDescription,
+    assetTypeGroupId,
     assetTypeName,
     assetTypes,
     compareMonth,
     deleteAssetTypeConfirmStep,
     drawerAsset,
     drawerAssetDescription,
+    drawerAssetGroupId,
     drawerHistory,
     drawerAssetName,
     editingRecord,
@@ -437,11 +493,15 @@ export function useAssetDashboard() {
     requestDeleteAssetType,
     requestDeleteRecord,
     resetRecordForm,
+    setAssetGroupName,
     setAssetTypeDescription,
+    setAssetTypeGroupId,
     setAssetTypeName,
     setDrawerAssetDescription,
+    setDrawerAssetGroupId,
     setDrawerAssetName,
     setDrawerOpen,
+    submitAssetGroup,
     submitAssetType,
     submitDrawerAssetType,
     submitRecord,

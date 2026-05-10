@@ -2,6 +2,7 @@ import { HTTPException } from "hono/http-exception";
 import type { OperationLogAction } from "../../db/store";
 
 const operationLogActions = new Set<OperationLogAction>([
+  "asset_group_created",
   "asset_type_created",
   "asset_type_updated",
   "asset_type_deleted",

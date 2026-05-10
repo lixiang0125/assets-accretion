@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AssetDetailTable } from "../components/dashboard/AssetDetailTable";
+import { AssetGroupForm } from "../components/dashboard/AssetGroupForm";
 import { DeleteAssetTypeDialog } from "../components/dashboard/DeleteAssetTypeDialog";
 import { DeleteRecordDialog } from "../components/dashboard/DeleteRecordDialog";
 import { AssetTypeForm } from "../components/dashboard/AssetTypeForm";
+import { GroupSummaryTable } from "../components/dashboard/GroupSummaryTable";
 import { HistoryDrawer } from "../components/dashboard/HistoryDrawer";
 import { MetricsGrid } from "../components/dashboard/MetricsGrid";
 import { PortfolioTrendChart } from "../components/dashboard/PortfolioTrendChart";
@@ -27,6 +29,7 @@ type AppView = "dashboard" | "operation-logs";
 export function App() {
   const dashboard = useAssetDashboard();
   const [activeView, setActiveView] = useState<AppView>("dashboard");
+  const [isAssetGroupDialogOpen, setIsAssetGroupDialogOpen] = useState(false);
   const [isAssetTypeDialogOpen, setIsAssetTypeDialogOpen] = useState(false);
 
   return (
@@ -55,7 +58,9 @@ export function App() {
                   id="summary-month"
                   type="month"
                   value={dashboard.month}
-                  onChange={(event) => dashboard.changeMonth(event.target.value)}
+                  onChange={(event) =>
+                    dashboard.changeMonth(event.target.value)
+                  }
                 />
                 <Button
                   type="button"
@@ -75,13 +80,18 @@ export function App() {
                 id="compare-month"
                 type="month"
                 value={dashboard.compareMonth}
-                onChange={(event) => dashboard.changeCompareMonth(event.target.value)}
+                onChange={(event) =>
+                  dashboard.changeCompareMonth(event.target.value)
+                }
               />
             </div>
           </div>
         </section>
 
-        <section className="dashboard-controls-row" aria-label="页面导航与资产类型操作">
+        <section
+          className="dashboard-controls-row"
+          aria-label="页面导航与资产类型操作"
+        >
           <nav className="view-tabs" aria-label="页面导航">
             <Button
               type="button"
@@ -94,24 +104,43 @@ export function App() {
             <Button
               type="button"
               variant={activeView === "operation-logs" ? "default" : "outline"}
-              className={cn(activeView === "operation-logs" && "view-tab-active")}
+              className={cn(
+                activeView === "operation-logs" && "view-tab-active",
+              )}
               onClick={() => setActiveView("operation-logs")}
             >
               操作记录
             </Button>
           </nav>
-          <Button type="button" variant="outline" onClick={() => setIsAssetTypeDialogOpen(true)}>
-            添加资产类型
-          </Button>
+          <div className="dashboard-config-actions">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAssetGroupDialogOpen(true)}
+            >
+              添加资产分组
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAssetTypeDialogOpen(true)}
+            >
+              添加资产类型
+            </Button>
+          </div>
         </section>
 
         {activeView === "dashboard" ? (
           <>
-            <MetricsGrid compareMonth={dashboard.compareMonth} summary={dashboard.summary} />
+            <MetricsGrid
+              compareMonth={dashboard.compareMonth}
+              summary={dashboard.summary}
+            />
             <PortfolioTrendChart
               items={dashboard.portfolioTrend}
               selectedMonth={dashboard.month}
             />
+            <GroupSummaryTable groups={dashboard.summary?.groups ?? []} />
             <AssetDetailTable
               items={dashboard.summary?.items ?? []}
               status={dashboard.status}
@@ -123,18 +152,23 @@ export function App() {
             />
           </>
         ) : (
-          <OperationLogPage onRestored={() => dashboard.refreshDashboard("删除记录已恢复")} />
+          <OperationLogPage
+            onRestored={() => dashboard.refreshDashboard("删除记录已恢复")}
+          />
         )}
       </main>
 
       <HistoryDrawer
         asset={dashboard.drawerAsset}
+        assetGroups={dashboard.assetGroups}
         assetDescription={dashboard.drawerAssetDescription}
+        assetGroupId={dashboard.drawerAssetGroupId}
         assetName={dashboard.drawerAssetName}
         history={dashboard.drawerHistory}
         isEditingAsset={dashboard.isEditingDrawerAsset}
         isLoading={dashboard.isHistoryLoading}
         onAssetDescriptionChange={dashboard.setDrawerAssetDescription}
+        onAssetGroupIdChange={dashboard.setDrawerAssetGroupId}
         onAssetNameChange={dashboard.setDrawerAssetName}
         onCancelEditAsset={dashboard.cancelEditDrawerAsset}
         onRequestDeleteAsset={dashboard.requestDeleteAssetType}
@@ -168,7 +202,33 @@ export function App() {
         onCancel={dashboard.cancelDeleteAssetType}
         onConfirmStep={dashboard.confirmDeleteAssetType}
       />
-      <Dialog open={isAssetTypeDialogOpen} onOpenChange={setIsAssetTypeDialogOpen}>
+      <Dialog
+        open={isAssetGroupDialogOpen}
+        onOpenChange={setIsAssetGroupDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>添加资产分组</DialogTitle>
+            <DialogDescription>
+              先创建分组，再在资产类型里选择它。
+            </DialogDescription>
+          </DialogHeader>
+          <AssetGroupForm
+            name={dashboard.assetGroupName}
+            onNameChange={dashboard.setAssetGroupName}
+            onSubmit={async (event) => {
+              const created = await dashboard.submitAssetGroup(event);
+              if (created) {
+                setIsAssetGroupDialogOpen(false);
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={isAssetTypeDialogOpen}
+        onOpenChange={setIsAssetTypeDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>添加资产类型</DialogTitle>
@@ -177,10 +237,13 @@ export function App() {
             </DialogDescription>
           </DialogHeader>
           <AssetTypeForm
+            assetGroups={dashboard.assetGroups}
             description={dashboard.assetTypeDescription}
+            groupId={dashboard.assetTypeGroupId}
             name={dashboard.assetTypeName}
             submitLabel="添加类型"
             onDescriptionChange={dashboard.setAssetTypeDescription}
+            onGroupIdChange={dashboard.setAssetTypeGroupId}
             onNameChange={dashboard.setAssetTypeName}
             onSubmit={async (event) => {
               const created = await dashboard.submitAssetType(event);

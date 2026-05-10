@@ -1,4 +1,5 @@
 import type {
+  AssetGroup,
   AssetType,
   OperationLog,
   OperationLogAction,
@@ -24,9 +25,21 @@ export async function fetchAssetTypes() {
   return request<{ items: AssetType[] }>("/api/asset-types");
 }
 
+export async function fetchAssetGroups() {
+  return request<{ items: AssetGroup[] }>("/api/asset-groups");
+}
+
+export async function createAssetGroup(input: { name: string }) {
+  return request<{ item: AssetGroup }>("/api/asset-groups", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 export async function createAssetType(input: {
   name: string;
   description: string;
+  groupId: number | null;
 }) {
   return request<{ item: AssetType }>("/api/asset-types", {
     method: "POST",
@@ -36,7 +49,7 @@ export async function createAssetType(input: {
 
 export async function updateAssetType(
   assetTypeId: number,
-  input: { name: string; description: string }
+  input: { name: string; description: string; groupId: number | null },
 ) {
   return request<{ item: AssetType }>(`/api/asset-types/${assetTypeId}`, {
     method: "PUT",
@@ -61,7 +74,9 @@ export async function fetchPortfolioTrend() {
 }
 
 export async function fetchAssetHistory(assetTypeId: number) {
-  return request<{ items: SummaryItem[] }>(`/api/asset-types/${assetTypeId}/history`);
+  return request<{ items: SummaryItem[] }>(
+    `/api/asset-types/${assetTypeId}/history`,
+  );
 }
 
 export async function saveRecord(input: RecordFormState, recordId?: number) {
@@ -72,14 +87,19 @@ export async function saveRecord(input: RecordFormState, recordId?: number) {
     note: input.note,
   };
 
-  return request<{ item: SummaryItem }>(recordId ? `/api/records/${recordId}` : "/api/records", {
-    method: recordId ? "PUT" : "POST",
-    body: JSON.stringify(payload),
-  });
+  return request<{ item: SummaryItem }>(
+    recordId ? `/api/records/${recordId}` : "/api/records",
+    {
+      method: recordId ? "PUT" : "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function deleteRecord(recordId: number) {
-  return request<{ ok: true }>(`/api/records/${recordId}`, { method: "DELETE" });
+  return request<{ ok: true }>(`/api/records/${recordId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function fetchOperationLogs(input?: {
@@ -92,13 +112,13 @@ export async function fetchOperationLogs(input?: {
   const query = params.toString();
 
   return request<{ items: OperationLog[] }>(
-    `/api/operation-logs${query ? `?${query}` : ""}`
+    `/api/operation-logs${query ? `?${query}` : ""}`,
   );
 }
 
 export async function restoreOperationLog(logId: number) {
   return request<{ item: SummaryItem; log: OperationLog }>(
     `/api/operation-logs/${logId}/restore`,
-    { method: "POST" }
+    { method: "POST" },
   );
 }

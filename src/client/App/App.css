@@ -67,6 +67,11 @@ h1 {
   margin: 0 0 14px;
 }
 
+.dashboard-config-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .period-panel {
   display: flex;
   align-items: flex-end;
@@ -121,6 +126,7 @@ h1 {
   }
 
   .dashboard-controls-row,
+  .dashboard-config-actions,
   .period-panel {
     align-items: stretch;
     flex-direction: column;
@@ -138,5 +144,4 @@ h1 {
   .view-tabs .ui-button {
     width: 100%;
   }
-
 }

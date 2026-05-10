@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { Pencil, Trash2, X } from "lucide-react";
-import type { AssetType, SummaryItem } from "../../../types";
+import type { AssetGroup, AssetType, SummaryItem } from "../../../types";
 import {
   formatCurrency,
   formatDateTime,
@@ -11,6 +11,13 @@ import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { Input } from "../../ui/Input";
 import { Label } from "../../ui/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/Select";
 import {
   Sheet,
   SheetContent,
@@ -28,14 +35,19 @@ import {
 } from "../../ui/Table";
 import { HistoryChart } from "../HistoryChart";
 
+const ungroupedValue = "__ungrouped__";
+
 type HistoryDrawerProps = {
   asset: AssetType | null;
+  assetGroups: AssetGroup[];
   assetDescription: string;
+  assetGroupId: string;
   assetName: string;
   history: SummaryItem[];
   isEditingAsset: boolean;
   isLoading: boolean;
   onAssetDescriptionChange: (value: string) => void;
+  onAssetGroupIdChange: (value: string) => void;
   onAssetNameChange: (value: string) => void;
   onCancelEditAsset: () => void;
   onRequestDeleteAsset: () => void;
@@ -46,12 +58,15 @@ type HistoryDrawerProps = {
 
 export function HistoryDrawer({
   asset,
+  assetGroups,
   assetDescription,
+  assetGroupId,
   assetName,
   history,
   isEditingAsset,
   isLoading,
   onAssetDescriptionChange,
+  onAssetGroupIdChange,
   onAssetNameChange,
   onCancelEditAsset,
   onRequestDeleteAsset,
@@ -68,6 +83,7 @@ export function HistoryDrawer({
               <div>
                 <SheetDescription>月度变化</SheetDescription>
                 <SheetTitle>{asset.name}</SheetTitle>
+                <p className="sheet-group">{asset.groupName ?? "未分组"}</p>
                 {asset.description ? (
                   <p className="sheet-note">{asset.description}</p>
                 ) : null}
@@ -109,18 +125,50 @@ export function HistoryDrawer({
                   />
                 </div>
                 <div className="field-stack">
+                  <Label htmlFor="drawer-asset-type-group">分组</Label>
+                  <Select
+                    value={assetGroupId || ungroupedValue}
+                    onValueChange={(value) =>
+                      onAssetGroupIdChange(
+                        value === ungroupedValue ? "" : value,
+                      )
+                    }
+                  >
+                    <SelectTrigger
+                      id="drawer-asset-type-group"
+                      aria-label="资产分组"
+                    >
+                      <SelectValue placeholder="选择资产分组" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ungroupedValue}>未分组</SelectItem>
+                      {assetGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.id.toString()}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="field-stack">
                   <Label htmlFor="drawer-asset-type-description">备注</Label>
                   <Input
                     autoComplete="off"
                     id="drawer-asset-type-description"
                     placeholder="可选"
                     value={assetDescription}
-                    onChange={(event) => onAssetDescriptionChange(event.target.value)}
+                    onChange={(event) =>
+                      onAssetDescriptionChange(event.target.value)
+                    }
                   />
                 </div>
                 <div className="history-asset-form-actions">
                   <Button type="submit">保存修改</Button>
-                  <Button type="button" variant="outline" onClick={onCancelEditAsset}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancelEditAsset}
+                  >
                     <X aria-hidden="true" />
                     取消
                   </Button>
@@ -129,16 +177,22 @@ export function HistoryDrawer({
             ) : null}
 
             <Card className="chart-panel">
-              {isLoading ? <div className="empty-chart">加载中</div> : <HistoryChart items={history} />}
+              {isLoading ? (
+                <div className="empty-chart">加载中</div>
+              ) : (
+                <HistoryChart items={history} />
+              )}
             </Card>
 
             <div className="table-scroll drawer-table">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {["月份", "价值", "增值金额", "增值率", "最后更新"].map((heading) => (
-                      <TableHead key={heading}>{heading}</TableHead>
-                    ))}
+                    {["月份", "价值", "增值金额", "增值率", "最后更新"].map(
+                      (heading) => (
+                        <TableHead key={heading}>{heading}</TableHead>
+                      ),
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>

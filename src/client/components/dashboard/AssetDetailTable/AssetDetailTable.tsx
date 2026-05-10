@@ -42,14 +42,20 @@ export function AssetDetailTable({
   const [sortState, setSortState] = useState<AssetDetailSortState | null>(null);
   const sortedItems = useMemo(
     () => sortSummaryItems(items, sortState),
-    [items, sortState]
+    [items, sortState],
   );
 
   return (
     <Card aria-label="资产明细" role="region">
       <CardHeader className="section-title-row">
         <CardTitle>月度明细</CardTitle>
-        <p className={cn("status-text", statusType === "error" && "status-error")} role="status">
+        <p
+          className={cn(
+            "status-text",
+            statusType === "error" && "status-error",
+          )}
+          role="status"
+        >
           {status}
         </p>
       </CardHeader>
@@ -59,6 +65,7 @@ export function AssetDetailTable({
             <TableHeader>
               <TableRow>
                 <TableHead>资产类型</TableHead>
+                <TableHead>分组</TableHead>
                 <TableHead>月份</TableHead>
                 <SortableTableHead
                   label="当月价值"
@@ -85,7 +92,7 @@ export function AssetDetailTable({
             <TableBody>
               {sortedItems.length === 0 ? (
                 <TableRow>
-                  <TableCell className="empty-cell" colSpan={7}>
+                  <TableCell className="empty-cell" colSpan={8}>
                     还没有资产类型
                   </TableCell>
                 </TableRow>
@@ -103,6 +110,11 @@ export function AssetDetailTable({
                         >
                           {item.assetTypeName}
                         </Button>
+                      </TableCell>
+                      <TableCell>
+                        <span className="asset-group-text">
+                          {item.assetGroupName ?? "未分组"}
+                        </span>
                       </TableCell>
                       <TableCell>{item.month}</TableCell>
                       <TableCell>
@@ -128,7 +140,12 @@ export function AssetDetailTable({
                         <div className="row-actions">
                           {item.hasRecord ? (
                             <>
-                              <Button type="button" size="sm" variant="outline" onClick={() => onEditRecord(item)}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onEditRecord(item)}
+                              >
                                 编辑
                               </Button>
                               <Button
@@ -141,7 +158,12 @@ export function AssetDetailTable({
                               </Button>
                             </>
                           ) : (
-                            <Button type="button" size="sm" variant="outline" onClick={() => onRecordAssetType(item)}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onRecordAssetType(item)}
+                            >
                               记录
                             </Button>
                           )}
@@ -173,7 +195,11 @@ function SortableTableHead({
   const isActive = sortState?.key === sortKey;
   const direction = isActive ? sortState.direction : null;
   const ariaSort =
-    direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none";
+    direction === "asc"
+      ? "ascending"
+      : direction === "desc"
+        ? "descending"
+        : "none";
 
   return (
     <TableHead aria-sort={ariaSort}>

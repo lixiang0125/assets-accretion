@@ -1,7 +1,10 @@
 import type { OperationLog, OperationLogAction } from "../../../types";
 import { formatDateTime } from "../../../lib/format";
 import { cn } from "../../../lib/utils";
-import { useOperationLogs, type OperationLogFilter } from "../../../hooks/useOperationLogs";
+import {
+  useOperationLogs,
+  type OperationLogFilter,
+} from "../../../hooks/useOperationLogs";
 import { Button } from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
 import { Label } from "../../ui/Label";
@@ -26,6 +29,7 @@ type OperationLogPageProps = {
 };
 
 const actionLabels: Record<OperationLogAction, string> = {
+  asset_group_created: "创建资产分组",
   asset_type_created: "创建资产类型",
   asset_type_updated: "更新资产类型",
   asset_type_deleted: "删除资产类型",
@@ -37,6 +41,7 @@ const actionLabels: Record<OperationLogAction, string> = {
 
 const filters: Array<{ label: string; value: OperationLogFilter }> = [
   { label: "全部操作", value: "all" },
+  { label: "创建资产分组", value: "asset_group_created" },
   { label: "创建资产类型", value: "asset_type_created" },
   { label: "更新资产类型", value: "asset_type_updated" },
   { label: "删除资产类型", value: "asset_type_deleted" },
@@ -53,7 +58,7 @@ function formatPayload(log: OperationLog) {
       after: log.afterPayload ?? null,
     },
     null,
-    2
+    2,
   );
 }
 
@@ -71,9 +76,17 @@ export function OperationLogPage({ onRestored }: OperationLogPageProps) {
       <CardHeader className="section-title-row">
         <div>
           <CardTitle>操作记录</CardTitle>
-          <p className="section-subtitle">查询本地账本的创建、更新、删除和恢复历史</p>
+          <p className="section-subtitle">
+            查询本地账本的创建、更新、删除和恢复历史
+          </p>
         </div>
-        <p className={cn("status-text", logs.statusType === "error" && "status-error")} role="status">
+        <p
+          className={cn(
+            "status-text",
+            logs.statusType === "error" && "status-error",
+          )}
+          role="status"
+        >
           {logs.isLoading ? "加载中" : logs.status}
         </p>
       </CardHeader>
@@ -143,7 +156,9 @@ export function OperationLogPage({ onRestored }: OperationLogPageProps) {
                     </TableCell>
                     <TableCell>{restoreStateLabel(log)}</TableCell>
                     <TableCell>
-                      {log.action === "record_deleted" && log.reversible && !log.restoredAt ? (
+                      {log.action === "record_deleted" &&
+                      log.reversible &&
+                      !log.restoredAt ? (
                         <Button
                           type="button"
                           size="sm"

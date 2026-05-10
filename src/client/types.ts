@@ -2,6 +2,14 @@ export type AssetType = {
   id: number;
   name: string;
   description: string | null;
+  groupId: number | null;
+  groupName: string | null;
+  createdAt: string;
+};
+
+export type AssetGroup = {
+  id: number;
+  name: string;
   createdAt: string;
 };
 
@@ -9,6 +17,8 @@ export type SummaryItem = {
   id: number | null;
   assetTypeId: number;
   assetTypeName: string;
+  assetGroupId: number | null;
+  assetGroupName: string | null;
   month: string;
   value: number | null;
   effectiveMonth: string | null;
@@ -23,6 +33,17 @@ export type SummaryItem = {
   hasRecord: boolean;
 };
 
+export type AssetGroupSummary = {
+  groupId: number | null;
+  groupName: string | null;
+  assetTypeCount: number;
+  recordedAssetTypeCount: number;
+  totalValue: number;
+  totalPreviousValue: number;
+  totalChangeValue: number;
+  totalChangeRate: number | null;
+};
+
 export type PortfolioSummary = {
   month: string | null;
   compareMonth: string | null;
@@ -30,6 +51,7 @@ export type PortfolioSummary = {
   totalPreviousValue: number;
   totalChangeValue: number;
   totalChangeRate: number | null;
+  groups: AssetGroupSummary[];
   items: SummaryItem[];
 };
 
@@ -48,6 +70,7 @@ export type RecordFormState = {
 };
 
 export type OperationLogAction =
+  | "asset_group_created"
   | "asset_type_created"
   | "asset_type_updated"
   | "asset_type_deleted"

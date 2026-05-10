@@ -7,7 +7,7 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 
 ## 功能
 
-- 添加资产类型，例如现金、股票、基金、房产。
+- 添加资产分组，再添加资产类型，例如现金、股票、基金、房产，并为资产类型选择已有分组。
 - 点击资产类型可查看并修改当前资产类型信息，也可二次确认后删除该资产类型。
 - 每个资产类型只创建一次，按月份持续更新该类型的资产价值。
 - 每个月的明细都会显示所有资产类型，未填写当月价值的类型显示为待记录，并在统计总资产时沿用该类型最近一次记录。
@@ -15,6 +15,7 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 - 操作记录页面可查询每次创建、更新、删除和恢复动作，删除记录支持恢复。
 - 点击资产类型可在抽屉中查看月维度变化和折线趋势。
 - 在月度明细上方查看总资产按月汇总的折线趋势。
+- 查看资产分组维度的统计值、对比值、增值金额和增值率。
 - 自动查找同资产类型的上一个记录月份，计算增值金额和增值率。
 - 支持选择任意对比月份，增值金额和增值率会明确标记对比时间点。
 - 汇总指定月份的总资产、前期对比值、总增值金额和总增值率；当月未更新的资产类型沿用上一个有记录月份的价值。
@@ -82,6 +83,8 @@ cp /some/path/my-assets.sqlite* /你的备份目录/
 ## API
 
 - `GET /api/health`
+- `GET /api/asset-groups`
+- `POST /api/asset-groups`
 - `GET /api/asset-types`
 - `POST /api/asset-types`
 - `PUT /api/asset-types/:id`
@@ -95,3 +98,6 @@ cp /some/path/my-assets.sqlite* /你的备份目录/
 - `POST /api/operation-logs/:id/restore`
 - `GET /api/summary?month=YYYY-MM`
 - `GET /api/summary/trend`
+
+`POST /api/asset-types` 和 `PUT /api/asset-types/:id` 支持 `groupId` 字段；为空时视为未分组。
+`GET /api/summary` 的响应包含 `groups`，按资产类型分组聚合指定月份的 `effectiveValue`、对比值、增值金额和增值率。
