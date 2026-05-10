@@ -148,6 +148,12 @@
 - 经验结论：页面截图应使用临时 SQLite 路径和演示数据生成，输出到 `docs/assets/dashboard-screenshot.png`。
 - 后续动作：刷新截图时显式设置 `ASSETS_DB_PATH=/tmp/...`，结束后清理临时数据库和临时浏览器 profile，不要使用默认 `data/assets.sqlite`。
 
+### 2026-05-10 测试 helper 必须防止写入正式账本
+
+- 触发场景：拆分服务端和数据层测试后，多个测试文件会并行运行；如果共享全局 app/store 或直接使用默认 store，容易关闭彼此的数据库连接，甚至误写默认 `data/assets.sqlite`。
+- 经验结论：每个测试文件应通过自己的 helper 上下文创建 app/store，数据库路径必须位于系统临时目录且文件名以 `assets-accretion-` 开头，并在 `afterEach` 清理主库、`-wal` 和 `-shm`。helper 里要用断言保护路径前缀，避免未来新增测试绕过临时库约束。
+- 后续动作：新增 `tests/server/**` 或 `tests/server-db/**` 测试时复用现有 helper；不要直接调用 `createAssetStore()` 默认路径，也不要跨测试文件共享可变 app/store。
+
 ## 提交流程
 
 ### 2026-05-06 每次修改后自动提交

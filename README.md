@@ -67,9 +67,10 @@ cp /some/path/my-assets.sqlite* /你的备份目录/
 
 - `src/client/components/ui/`：shadcn/ui 风格基础组件。
 - `src/client/components/dashboard/`：资产台账业务组件。
-- `src/client/api/`、`src/client/hooks/`、`src/client/styles.css`：分别承载前端请求、页面状态和样式。
+- `src/client/api/`、`src/client/hooks/`、`src/client/styles.css`：分别承载前端请求、页面状态/业务动作和样式。
 - `src/server/api/`：Hono API 路由；每个接口独立文件，资源目录 `index.ts` 只做组装。
-- `src/server/db/`：SQLite schema、查询和增值计算。
+- `src/server/db/`：SQLite store 装配层、schema、row/domain 映射，以及按资产分组、资产类型、记录、操作日志和汇总拆分的查询模块。
+- `tests/server/`、`tests/server-db/`：按 API/数据层场景拆分；测试数据库 helper 只允许在系统临时目录创建 `assets-accretion-*.sqlite` 临时库，避免影响 `data/assets.sqlite` 正式数据。
 
 ## 项目文档
 

@@ -30,7 +30,7 @@
   - `components/dashboard/` 放资产台账业务组件，每个组件一个目录。
   - `components/operations/` 放操作记录、审计和恢复相关业务组件，每个组件一个目录。
   - `api/` 放浏览器端接口请求封装。
-  - `hooks/` 放页面状态和业务动作。
+  - `hooks/` 放页面状态和业务动作；较大的页面 hook 应按数据加载、表单/抽屉状态、业务动作拆成小 hook，再由页面级 hook 组合。
   - `styles.css` 只作为样式入口，使用 `@import` 组织样式。
   - `styles/` 只放全局基础样式；页面级布局样式跟随页面组件目录。
   - 组件样式必须放到对应组件目录，例如 `components/dashboard/MetricCard/MetricCard.css`、`components/ui/Button/Button.css`。
@@ -39,7 +39,8 @@
   - `app.ts` 只组装 Hono app、页面、静态资源、API 路由和错误处理。
   - `api/` 放 Hono API 路由和 HTTP 校验 helpers；资源目录的 `index.ts` 只组装路由，每个具体 endpoint 必须独立文件维护。
   - `server.ts` 只负责读取端口并启动 `Bun.serve`。
-  - `db/store.ts` 封装 SQLite 表结构、查询和汇总计算。
+  - `db/store.ts` 只负责创建 SQLite 连接、初始化 schema 并组合数据层模块。
+  - `db/schema.ts` 放 schema 初始化和兼容迁移；`db/mappers.ts` 放 row/domain 映射；资产分组、资产类型、月度记录、操作日志和汇总读模型分别放在独立文件。
 - `tests/`：测试代码。
   - `tests/server/` 覆盖 Hono app 与页面/bundle 服务。
   - `tests/server-db/` 覆盖 SQLite 数据层。
@@ -61,6 +62,7 @@
 - Hono app 必须通过 `createApp(store)` 支持注入 `AssetStore`；不要在测试路径 import 时隐式打开默认 `data/assets.sqlite`。
 - 默认 SQLite store 只能在运行入口或显式默认 app 工厂中创建，避免模块加载副作用污染本地账本。
 - 测试不得放回 `src/` 根目录；保持运行时代码与验证代码分离。
+- `tests/server/` 和 `tests/server-db/` 必须使用 helper 在系统临时目录创建 `assets-accretion-*.sqlite` 临时库；不要在测试里直接使用 `data/assets.sqlite` 或默认 `createAssetStore()`。
 - 不要为了当前规模引入更深目录层级，除非同类文件已经明显超过一个文件的承载能力。
 
 ## 数据与隐私
@@ -74,7 +76,7 @@
 - 可恢复删除必须写入操作日志，日志中保留足够恢复的操作前快照；恢复时不得覆盖用户后续新建或更新的数据。
 - 资产类型是全局维度，不能为了让某个月显示该类型而重复创建资产类型或插入无价值的占位记录；月度视图应使用 `hasRecord: false` 这类状态表达未记录，并用 `effectiveValue` 沿用最近历史值参与总资产统计。
 - 增值金额和增值率必须有明确对比月份；新增或修改汇总逻辑时，要同时覆盖默认最近历史对比和指定任意月份对比。
-- 自动化测试、接口 smoke、浏览器冒烟测试必须使用临时 SQLite 路径，例如 `ASSETS_DB_PATH=/tmp/assets-accretion-e2e.sqlite`。
+- 自动化测试、接口 smoke、浏览器冒烟测试必须使用临时 SQLite 路径，例如 `ASSETS_DB_PATH=/tmp/assets-accretion-e2e.sqlite`；测试 helper 还应断言临时目录和文件名前缀，防止误写正式数据。
 - 如果验证过程误写入默认 `data/assets.sqlite`，必须只清理自己生成且可精确识别的测试数据，并在最终报告中说明。
 
 ## 依赖与包管理
@@ -109,7 +111,7 @@
 
 - `app.ts` 保持 app 组装和错误处理集中。
 - `api/` 保持接口逻辑集中，按资源拆分路由文件。
-- `db/store.ts` 只放 SQLite schema、查询和领域计算；不要把 Hono `Context`、HTTP 状态码或请求体解析放进数据库层。
+- `db/store.ts` 只做 SQLite store 装配；schema、row/domain 映射、查询和领域计算按 `db/` 下资源模块拆分。不要把 Hono `Context`、HTTP 状态码或请求体解析放进数据库层。
 - `server.ts` 保持薄入口，不放业务逻辑。
 - 新增 API 时同步补测试，并在 README/API 文档中列出。
 - 删除和恢复接口必须覆盖重复删除、重复恢复、冲突恢复、非法 id、不可恢复日志等失败路径。
@@ -120,6 +122,7 @@
 测试要求：
 
 - 测试目标是发现问题，不是只证明 happy path 能跑。
+- 数据库和 API 测试必须通过测试 helper 创建临时 SQLite 文件，并清理主库、`-wal` 和 `-shm`，确保不会影响 `data/assets.sqlite`。
 - 新增或修改 API 时，至少覆盖成功路径、输入校验失败、资源不存在、唯一约束/冲突和状态变化后的再次查询。
 - 新增或修改 SQLite 行为时，至少覆盖边界月份、删除/更新后的对比关系、空结果和特殊数值，例如上期值为 `0`。
 - 涉及操作记录时，不能只验证日志数量；还要验证 `beforePayload`/`afterPayload`、`reversible`、`restoredAt` 和恢复后的业务查询结果。

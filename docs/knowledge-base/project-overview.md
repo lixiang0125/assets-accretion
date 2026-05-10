@@ -61,12 +61,21 @@ src/
     app.ts             Hono app 工厂、页面、静态资源和 API 组装
     server.ts          Bun.serve 监听入口
     db/
-      store.ts         SQLite schema、数据访问与增值计算
+      store.ts         SQLite store 装配入口，保持 createAssetStore 对外 API
+      schema.ts        SQLite schema 初始化与兼容迁移
+      mappers.ts       SQLite row 到领域对象的映射
+      asset-groups.ts  资产分组查询与写入
+      asset-types.ts   资产类型查询、更新与级联删除快照
+      records.ts       月度记录写入、删除和恢复
+      operation-logs.ts 操作日志查询与写入
+      summary.ts       汇总、历史和趋势读模型
 tests/
   server/
-    server.test.ts     Hono app、document、bundle 服务测试
+    *.test.ts          Hono app、document、bundle 和 API 场景测试
+    helpers.ts         每个测试文件独立创建系统临时目录 SQLite app
   server-db/
-    store.test.ts      SQLite 数据层测试
+    *.test.ts          SQLite 数据层场景测试
+    helpers.ts         只允许在系统临时目录创建 assets-accretion-*.sqlite 临时库
 data/
   .gitkeep             保留数据目录；SQLite 文件 ignored
 ```
@@ -186,6 +195,8 @@ SQLite 默认文件：`data/assets.sqlite`
 - 本地优先：SQLite 文件默认落在 `data/`，并通过 `.gitignore` 避免提交。
 - 轻量依赖：SQLite 使用 Bun 标准能力，不额外引入 ORM。
 - 清晰边界：客户端、服务端、测试分目录维护；前端组件、样式、API 请求和状态 hook 分层放置；后端 API 路由与 SQLite store 分离，且每个后端 endpoint 独立文件维护。
+- 数据库模块按职责拆分：`store.ts` 只负责创建数据库、初始化 schema 并组合查询模块；具体 SQL 分散到资产分组、资产类型、月度记录、操作日志和汇总读模型文件，避免单文件继续膨胀。
+- 测试数据隔离：`tests/server/` 与 `tests/server-db/` helper 都显式在系统临时目录创建 `assets-accretion-*.sqlite` 临时库并在每个测试后清理主库、`-wal` 和 `-shm` 文件；helper 会断言路径前缀，避免误写默认 `data/assets.sqlite`。
 - shadcn/ui 本地化：`src/client/components/ui/` 保存可维护的 shadcn/ui 风格组件源码，业务组件只组合这些基础组件，不直接复制 Radix 细节。
 - 组件目录内聚：`src/client/styles.css` 只作为 CSS 入口；业务组件和基础 UI 组件都以独立目录维护实现、样式和 `index.ts` 导出，避免继续形成平铺组件和单个大 CSS 文件。
 - 可注入 app：`createApp(store)` 是刻意保留的测试隔离点，测试和冒烟验证应传入临时 SQLite store，避免写入真实本地账本。
