@@ -18,6 +18,7 @@ export type {
   OperationLogAction,
   PortfolioSummary,
   PortfolioTrendPoint,
+  PortfolioTrendFilter,
   RestoreOperationResult,
 } from "./types";
 

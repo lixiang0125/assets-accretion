@@ -73,6 +73,18 @@ export async function fetchPortfolioTrend() {
   return request<{ items: PortfolioTrendPoint[] }>("/api/summary/trend");
 }
 
+export async function fetchPortfolioTrendByGroup(
+  groupId: number | "ungrouped" | null,
+) {
+  const params = new URLSearchParams();
+  if (groupId !== null) params.set("groupId", String(groupId));
+  const query = params.toString();
+
+  return request<{ items: PortfolioTrendPoint[] }>(
+    `/api/summary/trend${query ? `?${query}` : ""}`,
+  );
+}
+
 export async function fetchAssetHistory(assetTypeId: number) {
   return request<{ items: SummaryItem[] }>(
     `/api/asset-types/${assetTypeId}/history`,

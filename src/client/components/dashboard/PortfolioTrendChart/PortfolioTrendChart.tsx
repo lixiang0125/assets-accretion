@@ -1,10 +1,28 @@
-import type { PortfolioTrendPoint } from "../../../types";
+import type { AssetGroup, PortfolioTrendPoint } from "../../../types";
 import { formatCurrency } from "../../../lib/format";
+import {
+  allTrendGroupsValue,
+  trendFilterForGroup,
+  trendFilterLabel,
+  ungroupedTrendGroupsValue,
+  type TrendGroupFilterValue,
+} from "../../../lib/trend-filter";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
+import { Label } from "../../ui/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/Select";
 
 type PortfolioTrendChartProps = {
+  assetGroups: AssetGroup[];
+  groupFilter: TrendGroupFilterValue;
   items: PortfolioTrendPoint[];
   selectedMonth: string;
+  onGroupFilterChange: (value: TrendGroupFilterValue) => void;
 };
 
 type ChartPoint = {
@@ -28,7 +46,10 @@ function tickIndexes(length: number, selectedIndex: number) {
 }
 
 export function PortfolioTrendChart({
+  assetGroups,
+  groupFilter,
   items,
+  onGroupFilterChange,
   selectedMonth,
 }: PortfolioTrendChartProps) {
   const width = 760;
@@ -40,19 +61,49 @@ export function PortfolioTrendChart({
   const selectedIndex = sortedItems.findIndex(
     (item) => item.month === selectedMonth,
   );
+  const groupLabel = trendFilterLabel(groupFilter, assetGroups);
+  const title =
+    groupFilter === allTrendGroupsValue ? "总资产趋势" : `${groupLabel}趋势`;
+  const currentPrefix =
+    groupFilter === allTrendGroupsValue ? "" : `${groupLabel} `;
+  const controls = (
+    <div className="portfolio-trend-filter">
+      <Label htmlFor="portfolio-trend-group">趋势分组</Label>
+      <Select
+        value={groupFilter}
+        onValueChange={(value) =>
+          onGroupFilterChange(value as TrendGroupFilterValue)
+        }
+      >
+        <SelectTrigger id="portfolio-trend-group" aria-label="趋势分组">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={allTrendGroupsValue}>全部分组</SelectItem>
+          {assetGroups.map((group) => (
+            <SelectItem key={group.id} value={trendFilterForGroup(group.id)}>
+              {group.name}
+            </SelectItem>
+          ))}
+          <SelectItem value={ungroupedTrendGroupsValue}>未分组</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   if (sortedItems.length === 0) {
     return (
       <Card
         className="portfolio-trend-card"
-        aria-label="总资产月度趋势"
+        aria-label={title}
         role="region"
       >
         <CardHeader className="portfolio-trend-header">
           <div>
-            <CardTitle>总资产趋势</CardTitle>
-            <p className="portfolio-trend-subtitle">月维度汇总</p>
+            <CardTitle>{title}</CardTitle>
+            <p className="portfolio-trend-subtitle">{groupLabel} · 月维度汇总</p>
           </div>
+          {controls}
         </CardHeader>
         <CardContent>
           <div className="portfolio-trend-empty">暂无月度记录</div>
@@ -97,23 +148,26 @@ export function PortfolioTrendChart({
   return (
     <Card
       className="portfolio-trend-card"
-      aria-label="总资产月度趋势"
+      aria-label={title}
       role="region"
     >
       <CardHeader className="portfolio-trend-header">
         <div>
-          <CardTitle>总资产趋势</CardTitle>
-          <p className="portfolio-trend-subtitle">月维度汇总</p>
+          <CardTitle>{title}</CardTitle>
+          <p className="portfolio-trend-subtitle">{groupLabel} · 月维度汇总</p>
         </div>
-        <p className="portfolio-trend-current">
-          {selectedPoint
-            ? `${selectedPoint.item.month} ${formatCurrency(selectedPoint.item.totalValue)}`
-            : `最新 ${formatCurrency(latestPoint.item.totalValue)}`}
-        </p>
+        <div className="portfolio-trend-header-side">
+          <p className="portfolio-trend-current">
+            {selectedPoint
+              ? `${currentPrefix}${selectedPoint.item.month} ${formatCurrency(selectedPoint.item.totalValue)}`
+              : `${currentPrefix}最新 ${formatCurrency(latestPoint.item.totalValue)}`}
+          </p>
+          {controls}
+        </div>
       </CardHeader>
       <CardContent>
         <svg
-          aria-label="总资产按月份变化折线图"
+          aria-label={`${title}按月份变化折线图`}
           className="portfolio-trend-chart"
           role="img"
           viewBox={`0 0 ${width} ${height}`}

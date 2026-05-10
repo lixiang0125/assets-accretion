@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import {
   fetchAssetGroups,
   fetchAssetTypes,
-  fetchPortfolioTrend,
+  fetchPortfolioTrendByGroup,
   fetchSummary,
 } from "../api/assets";
 import { currentMonth, nextMonth, previousMonth } from "../lib/format";
+import {
+  allTrendGroupsValue,
+  trendFilterToGroupId,
+  type TrendGroupFilterValue,
+} from "../lib/trend-filter";
 import type {
   AssetGroup,
   AssetType,
@@ -34,6 +39,8 @@ export function useDashboardData({
   const [portfolioTrend, setPortfolioTrend] = useState<PortfolioTrendPoint[]>(
     [],
   );
+  const [trendGroupFilter, setTrendGroupFilter] =
+    useState<TrendGroupFilterValue>(allTrendGroupsValue);
 
   async function loadAssetTypes() {
     const data = await fetchAssetTypes();
@@ -56,8 +63,10 @@ export function useDashboardData({
     return data;
   }
 
-  async function loadPortfolioTrend() {
-    const data = await fetchPortfolioTrend();
+  async function loadPortfolioTrend(nextFilter = trendGroupFilter) {
+    const data = await fetchPortfolioTrendByGroup(
+      trendFilterToGroupId(nextFilter),
+    );
     setPortfolioTrend(data.items);
     return data.items;
   }
@@ -102,6 +111,16 @@ export function useDashboardData({
     }
   }
 
+  async function changeTrendGroupFilter(nextFilter: TrendGroupFilterValue) {
+    setTrendGroupFilter(nextFilter);
+    try {
+      await loadPortfolioTrend(nextFilter);
+      setStatus("趋势分组已切换", "idle");
+    } catch (error) {
+      onError(error);
+    }
+  }
+
   useEffect(() => {
     Promise.all([
       loadAssetGroups(),
@@ -116,6 +135,7 @@ export function useDashboardData({
     assetTypes,
     changeCompareMonth,
     changeMonth,
+    changeTrendGroupFilter,
     compareMonth,
     goToNextMonth,
     goToPreviousMonth,
@@ -123,5 +143,6 @@ export function useDashboardData({
     portfolioTrend,
     refreshData,
     summary,
+    trendGroupFilter,
   };
 }

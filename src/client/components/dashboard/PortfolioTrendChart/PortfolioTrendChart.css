@@ -31,6 +31,31 @@
   white-space: nowrap;
 }
 
+.portfolio-trend-header-side {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portfolio-trend-filter {
+  align-items: center;
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  min-width: 156px;
+}
+
+.portfolio-trend-filter .ui-label {
+  color: var(--color-muted);
+  font-size: 11px;
+}
+
+.portfolio-trend-filter .ui-select-trigger {
+  height: 34px;
+  min-width: 156px;
+}
+
 .portfolio-trend-chart {
   display: block;
   width: 100%;
@@ -102,5 +127,15 @@
   .portfolio-trend-current {
     text-align: left;
     white-space: normal;
+  }
+
+  .portfolio-trend-header-side,
+  .portfolio-trend-filter {
+    align-items: stretch;
+    justify-items: stretch;
+  }
+
+  .portfolio-trend-filter .ui-select-trigger {
+    width: 100%;
   }
 }

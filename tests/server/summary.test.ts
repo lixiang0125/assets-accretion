@@ -94,3 +94,54 @@ test("lists portfolio trend through API", async () => {
     { month: "2026-05", totalValue: 180 },
   ]);
 });
+
+test("lists portfolio trend for a selected asset group", async () => {
+  const cashGroup = await createAssetGroup("现金类");
+  const stockGroup = await createAssetGroup("证券");
+  const cash = await createAssetType("现金", cashGroup.id);
+  const stock = await createAssetType("股票", stockGroup.id);
+
+  await createRecord({ assetTypeId: cash.id, month: "2026-04", value: 40 });
+  await createRecord({ assetTypeId: stock.id, month: "2026-04", value: 60 });
+  await createRecord({ assetTypeId: cash.id, month: "2026-05", value: 120 });
+
+  const response = await app.request(
+    `/api/summary/trend?groupId=${cashGroup.id}`,
+  );
+  const payload = await response.json();
+
+  expect(response.status).toBe(200);
+  expect(payload.items).toEqual([
+    { month: "2026-04", totalValue: 40 },
+    { month: "2026-05", totalValue: 120 },
+  ]);
+});
+
+test("lists ungrouped portfolio trend through API", async () => {
+  const stockGroup = await createAssetGroup("证券");
+  const cash = await createAssetType("现金");
+  const stock = await createAssetType("股票", stockGroup.id);
+
+  await createRecord({ assetTypeId: stock.id, month: "2026-04", value: 60 });
+  await createRecord({ assetTypeId: cash.id, month: "2026-05", value: 120 });
+
+  const response = await app.request("/api/summary/trend?groupId=ungrouped");
+  const payload = await response.json();
+
+  expect(response.status).toBe(200);
+  expect(payload.items).toEqual([{ month: "2026-05", totalValue: 120 }]);
+});
+
+test("rejects invalid and missing portfolio trend group filters", async () => {
+  const invalidResponse = await app.request("/api/summary/trend?groupId=abc");
+  const missingResponse = await app.request("/api/summary/trend?groupId=999999");
+
+  expect(invalidResponse.status).toBe(400);
+  expect(await invalidResponse.json()).toEqual({
+    error: "资产分组 id 必须是正整数或 ungrouped",
+  });
+  expect(missingResponse.status).toBe(404);
+  expect(await missingResponse.json()).toEqual({
+    error: "资产分组不存在",
+  });
+});

@@ -137,8 +137,11 @@ export function App() {
               summary={dashboard.summary}
             />
             <PortfolioTrendChart
+              assetGroups={dashboard.assetGroups}
+              groupFilter={dashboard.trendGroupFilter}
               items={dashboard.portfolioTrend}
               selectedMonth={dashboard.month}
+              onGroupFilterChange={dashboard.changeTrendGroupFilter}
             />
             <GroupSummaryTable groups={dashboard.summary?.groups ?? []} />
             <AssetDetailTable

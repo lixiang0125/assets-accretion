@@ -4,6 +4,7 @@ import type {
   AssetGroupSummary,
   AssetSummaryRow,
   PortfolioSummary,
+  PortfolioTrendFilter,
   PortfolioTrendRow,
 } from "./types";
 
@@ -222,32 +223,54 @@ export function createSummaryQueries(db: Database) {
     };
   }
 
-  function listPortfolioTrend() {
+  function listPortfolioTrend(filter?: PortfolioTrendFilter) {
+    const groupCondition =
+      filter?.groupId === undefined
+        ? ""
+        : filter.groupId === null
+          ? "AND t.group_id IS NULL"
+          : "AND t.group_id = $groupId";
+    const existsGroupCondition =
+      filter?.groupId === undefined
+        ? ""
+        : filter.groupId === null
+          ? "AND et.group_id IS NULL"
+          : "AND et.group_id = $groupId";
+    const sql = `
+      SELECT
+        m.month,
+        COALESCE(
+          SUM(
+            (
+              SELECT r.value
+              FROM asset_records r
+              WHERE r.asset_type_id = t.id
+                AND r.month <= m.month
+              ORDER BY r.month DESC
+              LIMIT 1
+            )
+          ),
+          0
+        ) AS total_value
+      FROM (SELECT DISTINCT month FROM asset_records) m
+      CROSS JOIN asset_types t
+      WHERE 1 = 1
+        ${groupCondition}
+        AND EXISTS (
+          SELECT 1
+          FROM asset_records er
+          JOIN asset_types et ON et.id = er.asset_type_id
+          WHERE er.month <= m.month
+            ${existsGroupCondition}
+          LIMIT 1
+        )
+      GROUP BY m.month
+      ORDER BY m.month ASC
+    `;
+
     const rows = db
-      .query<PortfolioTrendRow, []>(
-        `
-        SELECT
-          m.month,
-          COALESCE(
-            SUM(
-              (
-                SELECT r.value
-                FROM asset_records r
-                WHERE r.asset_type_id = t.id
-                  AND r.month <= m.month
-                ORDER BY r.month DESC
-                LIMIT 1
-              )
-            ),
-            0
-          ) AS total_value
-        FROM (SELECT DISTINCT month FROM asset_records) m
-        CROSS JOIN asset_types t
-        GROUP BY m.month
-        ORDER BY m.month ASC
-      `,
-      )
-      .all();
+      .query<PortfolioTrendRow, [{ $groupId: number | null }]>(sql)
+      .all({ $groupId: filter?.groupId ?? null });
 
     return rows.map(mapPortfolioTrendPoint);
   }

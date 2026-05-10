@@ -12,7 +12,7 @@
 - 删除月度明细前必须二次确认。
 - 通过操作记录页面查询每次创建、更新、删除和恢复动作。
 - 对删除的月度明细，从操作记录中恢复删除前快照。
-- 在月度明细上方查看总资产按月汇总的折线趋势。
+- 在月度明细上方查看总资产按月汇总的折线趋势，并可按全部分组、指定分组或未分组筛选。
 - 查看资产分组维度的统计值、对比值、增值金额和增值率。
 - 点击资产类型，在抽屉中查看月维度变化和折线趋势。
 - 默认对比同一资产类型的上一个记录月份，也支持选择任意对比月份。
@@ -143,6 +143,7 @@ SQLite 默认文件：`data/assets.sqlite`
 - 增值对比取同一资产类型中早于当前月份的最近一条记录。
 - 月度汇总接口会按资产类型展开指定月份视图，未记录当月价值的资产类型返回 `hasRecord: false`、`value: null`，同时返回用于统计的 `effectiveValue`/`effectiveMonth`；这些沿用值来自目标月份之前最近一次记录，但不会自动向 `asset_records` 插入空记录。
 - 月度汇总响应同时返回 `groups`，按资产类型分组聚合 `effectiveValue`、对比值、增值金额和增值率；没有分组的资产类型归入 `groupName: null`。
+- 总资产趋势接口默认汇总全部资产类型；传入正整数 `groupId` 时只汇总该分组，传入 `groupId=ungrouped` 时只汇总未分组资产类型。分组趋势同样沿用最近历史记录，趋势起点必须来自当前筛选范围内已有记录，避免空分组或尚未开始记录的分组被其他分组撑出 0 点。
 
 ### `operation_logs`
 
@@ -188,7 +189,7 @@ SQLite 默认文件：`data/assets.sqlite`
 | `GET`    | `/api/operation-logs?action=record_deleted&limit=100` | 查询操作记录，`action` 可选，`limit` 范围 1 到 500        |
 | `POST`   | `/api/operation-logs/:id/restore`                     | 恢复可逆的删除操作                                        |
 | `GET`    | `/api/summary?month=YYYY-MM&compareMonth=YYYY-MM`     | 获取指定月份汇总、分组汇总与增值明细，`compareMonth` 可选 |
-| `GET`    | `/api/summary/trend`                                  | 获取各月份总资产汇总趋势                                  |
+| `GET`    | `/api/summary/trend?groupId=1`                        | 获取各月份总资产汇总趋势，`groupId` 可选；`ungrouped` 表示未分组 |
 
 ## 关键设计决策
 

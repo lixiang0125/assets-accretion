@@ -271,6 +271,74 @@ test("lists portfolio trend by month", () => {
   ]);
 });
 
+test("lists portfolio trend filtered by asset group", () => {
+  const assetStore = createTempStore();
+  const cashGroup = assetStore.createAssetGroup({ name: "现金类" });
+  const stockGroup = assetStore.createAssetGroup({ name: "证券" });
+  const cash = assetStore.createAssetType({
+    name: "现金",
+    groupId: cashGroup!.id,
+  });
+  const stock = assetStore.createAssetType({
+    name: "股票",
+    groupId: stockGroup!.id,
+  });
+
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-04",
+    value: 40,
+  });
+  assetStore.upsertRecord({
+    assetTypeId: stock!.id,
+    month: "2026-04",
+    value: 60,
+  });
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 120,
+  });
+
+  expect(assetStore.listPortfolioTrend({ groupId: cashGroup!.id })).toEqual([
+    { month: "2026-04", totalValue: 40 },
+    { month: "2026-05", totalValue: 120 },
+  ]);
+  expect(assetStore.listPortfolioTrend({ groupId: stockGroup!.id })).toEqual([
+    { month: "2026-04", totalValue: 60 },
+    { month: "2026-05", totalValue: 60 },
+  ]);
+});
+
+test("lists ungrouped portfolio trend and empty groups without borrowing other records", () => {
+  const assetStore = createTempStore();
+  const emptyGroup = assetStore.createAssetGroup({ name: "空分组" });
+  const cash = assetStore.createAssetType({ name: "现金" });
+  const stockGroup = assetStore.createAssetGroup({ name: "证券" });
+  const stock = assetStore.createAssetType({
+    name: "股票",
+    groupId: stockGroup!.id,
+  });
+
+  assetStore.upsertRecord({
+    assetTypeId: stock!.id,
+    month: "2026-04",
+    value: 60,
+  });
+  assetStore.upsertRecord({
+    assetTypeId: cash!.id,
+    month: "2026-05",
+    value: 120,
+  });
+
+  expect(assetStore.listPortfolioTrend({ groupId: null })).toEqual([
+    { month: "2026-05", totalValue: 120 },
+  ]);
+  expect(assetStore.listPortfolioTrend({ groupId: emptyGroup!.id })).toEqual(
+    [],
+  );
+});
+
 test("history comparison falls back after deleting an intermediate month", () => {
   const assetStore = createTempStore();
   const cash = assetStore.createAssetType({ name: "现金" });

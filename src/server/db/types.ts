@@ -71,6 +71,10 @@ export type PortfolioTrendPoint = {
   totalValue: number;
 };
 
+export type PortfolioTrendFilter = {
+  groupId?: number | null;
+};
+
 export type OperationLogAction =
   | "asset_group_created"
   | "asset_type_created"

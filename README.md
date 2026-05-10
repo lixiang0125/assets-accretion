@@ -14,7 +14,7 @@ SQLite 文件；前端使用 React 提供图形化录入和展示。
 - 月度明细支持编辑和删除；删除需要二次确认。
 - 操作记录页面可查询每次创建、更新、删除和恢复动作，删除记录支持恢复。
 - 点击资产类型可在抽屉中查看月维度变化和折线趋势。
-- 在月度明细上方查看总资产按月汇总的折线趋势。
+- 在月度明细上方查看总资产按月汇总的折线趋势，可按全部分组、指定分组或未分组筛选。
 - 查看资产分组维度的统计值、对比值、增值金额和增值率。
 - 自动查找同资产类型的上一个记录月份，计算增值金额和增值率。
 - 支持选择任意对比月份，增值金额和增值率会明确标记对比时间点。
@@ -98,7 +98,8 @@ cp /some/path/my-assets.sqlite* /你的备份目录/
 - `GET /api/operation-logs?action=record_deleted&limit=100`
 - `POST /api/operation-logs/:id/restore`
 - `GET /api/summary?month=YYYY-MM`
-- `GET /api/summary/trend`
+- `GET /api/summary/trend?groupId=1`
 
 `POST /api/asset-types` 和 `PUT /api/asset-types/:id` 支持 `groupId` 字段；为空时视为未分组。
 `GET /api/summary` 的响应包含 `groups`，按资产类型分组聚合指定月份的 `effectiveValue`、对比值、增值金额和增值率。
+`GET /api/summary/trend` 默认返回全部分组的总资产趋势；传入正整数 `groupId` 返回指定分组趋势，传入 `groupId=ungrouped` 返回未分组趋势。
