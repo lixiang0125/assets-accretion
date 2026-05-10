@@ -28,7 +28,7 @@
 }
 
 .ui-select-content {
-  z-index: 50;
+  z-index: 90;
   min-width: var(--radix-select-trigger-width);
   overflow: hidden;
   border: 1px solid var(--color-border);
