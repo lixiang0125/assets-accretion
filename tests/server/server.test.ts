@@ -109,6 +109,9 @@ test("serves separated client stylesheet", async () => {
   expect(response.headers.get("content-type")).toContain("text/css");
   expect(stylesheet).toContain('@import "./App/App.css"');
   expect(stylesheet).toContain(
+    '@import "./components/dashboard/AssetGroupForm/AssetGroupForm.css"',
+  );
+  expect(stylesheet).toContain(
     '@import "./components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css"',
   );
   expect(stylesheet).toContain(
@@ -131,6 +134,9 @@ test("serves imported component stylesheets from the client tree only", async ()
   const deleteAssetTypeStylesResponse = await app.request(
     "/assets/components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css",
   );
+  const assetGroupFormStylesResponse = await app.request(
+    "/assets/components/dashboard/AssetGroupForm/AssetGroupForm.css",
+  );
   const groupSummaryStylesResponse = await app.request(
     "/assets/components/dashboard/GroupSummaryTable/GroupSummaryTable.css",
   );
@@ -145,6 +151,10 @@ test("serves imported component stylesheets from the client tree only", async ()
   expect(deleteAssetTypeStylesResponse.status).toBe(200);
   expect(await deleteAssetTypeStylesResponse.text()).toContain(
     ".delete-asset-type-summary",
+  );
+  expect(assetGroupFormStylesResponse.status).toBe(200);
+  expect(await assetGroupFormStylesResponse.text()).toContain(
+    ".asset-group-list",
   );
   expect(groupSummaryStylesResponse.status).toBe(200);
   expect(await groupSummaryStylesResponse.text()).toContain(

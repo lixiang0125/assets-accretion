@@ -1,6 +1,7 @@
 @import "./styles/base.css";
 @import "./App/App.css";
 @import "./components/dashboard/AssetDetailTable/AssetDetailTable.css";
+@import "./components/dashboard/AssetGroupForm/AssetGroupForm.css";
 @import "./components/dashboard/DeleteAssetTypeDialog/DeleteAssetTypeDialog.css";
 @import "./components/dashboard/DeleteRecordDialog/DeleteRecordDialog.css";
 @import "./components/dashboard/GroupSummaryTable/GroupSummaryTable.css";

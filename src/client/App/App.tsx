@@ -214,6 +214,7 @@ export function App() {
             </DialogDescription>
           </DialogHeader>
           <AssetGroupForm
+            assetGroups={dashboard.assetGroups}
             name={dashboard.assetGroupName}
             onNameChange={dashboard.setAssetGroupName}
             onSubmit={async (event) => {

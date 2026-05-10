@@ -1,14 +1,17 @@
+import type { AssetGroup } from "../../../types";
 import { Button } from "../../ui/Button";
 import { Input } from "../../ui/Input";
 import { Label } from "../../ui/Label";
 
 type AssetGroupFormProps = {
+  assetGroups: AssetGroup[];
   name: string;
   onNameChange: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 };
 
 export function AssetGroupForm({
+  assetGroups,
   name,
   onNameChange,
   onSubmit,
@@ -27,6 +30,23 @@ export function AssetGroupForm({
         />
       </div>
       <Button type="submit">添加分组</Button>
+      <section className="asset-group-list" aria-label="已有资产分组">
+        <div className="asset-group-list-header">
+          <h3>已有分组</h3>
+          <span>{assetGroups.length}</span>
+        </div>
+        {assetGroups.length === 0 ? (
+          <p className="asset-group-empty">暂无分组</p>
+        ) : (
+          <div className="asset-group-chip-list">
+            {assetGroups.map((group) => (
+              <span className="asset-group-chip" key={group.id}>
+                {group.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </section>
     </form>
   );
 }
